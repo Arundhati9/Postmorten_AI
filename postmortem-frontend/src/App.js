@@ -15,6 +15,7 @@ function App() {
     return saved ? JSON.parse(saved) : [];
   });
   const [darkMode, setDarkMode] = useState(true);
+  const [activePopup, setActivePopup] = useState(null);
 
   useEffect(() => {
     document.body.className = darkMode ? "dark" : "light";
@@ -63,32 +64,42 @@ function App() {
         </button>
       </header>
 
-      <main>
-        <input
-          type="text"
-          placeholder="Paste YouTube URL..."
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-        />
-        <button onClick={handleAnalyze}>Analyze</button>
+      <div className="main-section">
+        <aside className="history-panel">
+          <h3>Previous Analyses</h3>
+          {history.map((entry, index) => (
+            <div
+              key={index}
+              className="history-preview"
+              onClick={() => setActivePopup(entry)}
+            >
+              <p><strong>{entry.date}</strong></p>
+              <p>{entry.report.split("\n")[0]}</p>
+            </div>
+          ))}
+        </aside>
 
-        {loading && (
-          <div className="spinner-container">
-            <div className="spinner"></div>
-            <p>Analyzing...</p>
-          </div>
-        )}
+        <main>
+          <input
+            type="text"
+            placeholder="Paste YouTube URL..."
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+          <button onClick={handleAnalyze}>Analyze</button>
+
+          {loading && (
+            <div className="spinner-container">
+              <div className="spinner"></div>
+              <p>Analyzing...</p>
+            </div>
+          )}
 
         {report && (
-          <div id="report" className="ai-report">
+          <div id="report" className="report">
             <h2>📊 AI Analysis Report</h2>
-            {/* If your AI output is plain text, use <pre>{report}</pre> */}
-            {/* If your AI output may contain HTML/Markdown, use the below: */}
-            <div
-              className="ai-report-content"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(report) }}
-            />
-            <button onClick={exportPDF}>📄 Want PDF? Click Me</button>
+            <p>{report}</p>
+            <button onClick={exportPDF}>📄 Export as PDF</button>
           </div>
         )}
 
@@ -99,11 +110,7 @@ function App() {
               <div key={index} className="history-item">
                 <p><strong>{entry.date}</strong></p>
                 <a href={entry.url} target="_blank" rel="noreferrer">{entry.url}</a>
-                {/* Support HTML in history as well */}
-                <div
-                  className="ai-report-content"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(entry.report) }}
-                />
+                <pre>{entry.report}</pre>
               </div>
             ))}
           </div>
