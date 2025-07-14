@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import DOMPurify from "dompurify"; // <-- Add this line
+import DOMPurify from "dompurify"; // Secure HTML rendering
 import "./App.css";
 
 function App() {
@@ -106,27 +106,25 @@ function App() {
             </div>
           )}
 
-        {report && (
-          <div id="report" className="report">
-            <h2>📊 AI Analysis Report</h2>
-            <p>{report}</p>
-            <button onClick={exportPDF}>📄 Export as PDF</button>
-          </div>
-        )}
+          {report && (
+            <div id="report" className="report">
+              <h2>📊 AI Analysis Report</h2>
+              {renderSanitizedReport(report)}
+              <button onClick={exportPDF}>📄 Export as PDF</button>
+            </div>
+          )}
+        </main>
+      </div>
 
-        {history.length > 0 && (
-          <div className="history">
-            <h3>Previous Analyses</h3>
-            {history.map((entry, index) => (
-              <div key={index} className="history-item">
-                <p><strong>{entry.date}</strong></p>
-                <a href={entry.url} target="_blank" rel="noreferrer">{entry.url}</a>
-                <pre>{entry.report}</pre>
-              </div>
-            ))}
+      {activePopup && (
+        <div className="popup-overlay" onClick={() => setActivePopup(null)}>
+          <div className="popup" onClick={(e) => e.stopPropagation()}>
+            <h2>📜 Report from {activePopup.date}</h2>
+            {renderSanitizedReport(activePopup.report)}
+            <button onClick={() => setActivePopup(null)}>Close</button>
           </div>
-        )}
-      </main>
+        </div>
+      )}
     </div>
   );
 }
