@@ -63,7 +63,7 @@ async def analyze(request: Request):
         data = await request.json()
         url = data.get("url")
         language = data.get("language", "en")
-
+        print("URL received!")
         if not url:
             return {"report": "Error: No URL provided."}
 
@@ -219,7 +219,9 @@ Respond in {lang_name} with expert-level clarity and empathy.
             "transcript_excerpt": subtitle_excerpt
         }
 
-        CACHE[cache_key] = {"data": response, "timestamp": now}
+        # CACHE[cache_key] = {"data": response, "timestamp": now}/
+        CACHE[url]=response
+        
         return response
 
     except Exception as e:
