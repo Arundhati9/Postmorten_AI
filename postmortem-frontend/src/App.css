@@ -1,10 +1,8 @@
-/* Base styles */
+/* Reset & base */
 body, html, #root, .App {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-color);
@@ -13,6 +11,7 @@ body, html, #root, .App {
   display: flex;
 }
 
+/* Themes */
 body.light {
   background: #f2f2f2;
   color: #222;
@@ -23,10 +22,11 @@ body.dark {
   color: #f2f2f2;
 }
 
+/* App layout */
 .App {
   flex: 1;
   max-width: 1000px;
-  margin-left: 240px; /* accommodate history panel */
+  margin-left: 240px; /* for sidebar */
   padding: 2rem;
 }
 
@@ -102,7 +102,76 @@ button:hover {
   }
 }
 
-/* Report Styling */
+/* AI Report Box (HTML or raw) */
+.ai-report {
+  background: rgba(0, 114, 255, 0.08);
+  padding: 2rem;
+  margin-top: 2rem;
+  border-radius: 12px;
+  animation: fadeIn 1s ease-in;
+  font-size: 1rem;
+  color: inherit;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.ai-report h2 {
+  margin-bottom: 1rem;
+  color: #00c6ff;
+}
+
+.ai-report-content,
+.ai-report * {
+  font-family: inherit !important;
+  color: inherit !important;
+  font-size: inherit;
+  line-height: 1.6;
+}
+
+.ai-report-content h1,
+.ai-report-content h2,
+.ai-report-content h3 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+}
+
+.ai-report-content ul,
+.ai-report-content ol {
+  margin-left: 1.5em;
+}
+
+.ai-report-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.ai-report-content th,
+.ai-report-content td {
+  border: 1px solid #ddd;
+  padding: 0.5em;
+}
+
+.ai-report-content tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+body.dark .ai-report {
+  background: rgba(0, 114, 255, 0.15);
+  color: #f2f2f2;
+}
+
+body.dark .ai-report-content table,
+body.dark .ai-report-content th,
+body.dark .ai-report-content td {
+  border-color: #333;
+}
+
+body.dark .ai-report-content tr:nth-child(even) {
+  background: #23272f;
+}
+
+/* Structured Report Style (split by headings) */
 .report {
   background: rgba(0, 114, 255, 0.1);
   padding: 1.5rem;
@@ -114,24 +183,6 @@ button:hover {
 .report h2 {
   margin-bottom: 1rem;
   color: #00c6ff;
-}
-
-/* AI Report with formatted headings */
-.ai-report {
-  background: linear-gradient(145deg, #1e1e2f, #2c2c3a);
-  padding: 20px;
-  border-radius: 12px;
-  color: #f0f0f0;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4);
-  animation: fadeIn 0.5s ease-in-out;
-}
-
-.report-heading {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 16px;
-  border-bottom: 1px solid #444;
-  padding-bottom: 8px;
 }
 
 .report-section {
@@ -151,7 +202,7 @@ button:hover {
   margin-top: 4px;
 }
 
-/* Previous Analysis Panel */
+/* History Sidebar */
 .history-panel {
   position: fixed;
   top: 0;
@@ -172,33 +223,24 @@ button:hover {
   color: #00c6ff;
 }
 
-.history-entry {
+.history-preview {
   padding: 10px;
   border-bottom: 1px solid #444;
   cursor: pointer;
 }
 
-.history-entry:hover {
+.history-preview:hover {
   background-color: #2c2c3a;
 }
 
-.history-entry small {
+.history-preview p {
   font-size: 12px;
-  color: #aaa;
+  color: #ccc;
+  margin: 2px 0;
 }
 
-.history-entry strong {
-  display: block;
-  color: #fff;
-  margin-bottom: 4px;
-  font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Popup Modal for Report */
-.modal-overlay {
+/* Popup Modal */
+.popup-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -211,7 +253,7 @@ button:hover {
   z-index: 99;
 }
 
-.modal-content {
+.popup {
   background: #1e1e2f;
   padding: 30px;
   border-radius: 12px;
@@ -224,12 +266,12 @@ button:hover {
   position: relative;
 }
 
-.modal-content h2 {
+.popup h2 {
   color: #00c6ff;
   margin-bottom: 1rem;
 }
 
-.modal-content button {
+.popup button {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -244,9 +286,8 @@ button:hover {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);

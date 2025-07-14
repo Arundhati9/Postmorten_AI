@@ -1,8 +1,8 @@
-// src/App.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import DOMPurify from "dompurify"; // Secure HTML rendering
 import "./App.css";
 
 function App() {
@@ -47,11 +47,21 @@ function App() {
 
   const exportPDF = async () => {
     const input = document.getElementById("report");
+    if (!input) return;
     const canvas = await html2canvas(input);
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF();
     pdf.addImage(imgData, "PNG", 10, 10);
     pdf.save("postmortem_report.pdf");
+  };
+
+  const renderSanitizedReport = (rawReport) => {
+    return (
+      <div
+        className="ai-report-content"
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(rawReport) }}
+      />
+    );
   };
 
   return (
@@ -85,7 +95,9 @@ function App() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
           />
-          <button onClick={handleAnalyze}>Analyze</button>
+          <button onClick={handleAnalyze} disabled={loading}>
+            {loading ? "Analyzing..." : "Analyze"}
+          </button>
 
           {loading && (
             <div className="spinner-container">
@@ -97,15 +109,7 @@ function App() {
           {report && (
             <div id="report" className="report">
               <h2>📊 AI Analysis Report</h2>
-              {report.split(/\n(?=\d+\.)/).map((line, i) => {
-                const [heading, ...rest] = line.split(":");
-                return (
-                  <div key={i} className="report-section">
-                    <h3 className="report-subheading">{heading}</h3>
-                    <p className="report-explanation">{rest.join(":").trim()}</p>
-                  </div>
-                );
-              })}
+              {renderSanitizedReport(report)}
               <button onClick={exportPDF}>📄 Export as PDF</button>
             </div>
           )}
@@ -116,15 +120,7 @@ function App() {
         <div className="popup-overlay" onClick={() => setActivePopup(null)}>
           <div className="popup" onClick={(e) => e.stopPropagation()}>
             <h2>📜 Report from {activePopup.date}</h2>
-            {activePopup.report.split(/\n(?=\d+\.)/).map((line, i) => {
-              const [heading, ...rest] = line.split(":");
-              return (
-                <div key={i} className="report-section">
-                  <h3 className="report-subheading">{heading}</h3>
-                  <p className="report-explanation">{rest.join(":").trim()}</p>
-                </div>
-              );
-            })}
+            {renderSanitizedReport(activePopup.report)}
             <button onClick={() => setActivePopup(null)}>Close</button>
           </div>
         </div>
