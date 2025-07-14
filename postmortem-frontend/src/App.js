@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import DOMPurify from "dompurify"; // <-- Add this line
 import "./App.css";
 
 function App() {
@@ -79,10 +80,15 @@ function App() {
         )}
 
         {report && (
-          <div id="report" className="report">
+          <div id="report" className="ai-report">
             <h2>📊 AI Analysis Report</h2>
-            <p>{report}</p>
-            <button onClick={exportPDF}>📄 Export as PDF</button>
+            {/* If your AI output is plain text, use <pre>{report}</pre> */}
+            {/* If your AI output may contain HTML/Markdown, use the below: */}
+            <div
+              className="ai-report-content"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(report) }}
+            />
+            <button onClick={exportPDF}>📄 Want PDF? Click Me</button>
           </div>
         )}
 
@@ -93,7 +99,11 @@ function App() {
               <div key={index} className="history-item">
                 <p><strong>{entry.date}</strong></p>
                 <a href={entry.url} target="_blank" rel="noreferrer">{entry.url}</a>
-                <pre>{entry.report}</pre>
+                {/* Support HTML in history as well */}
+                <div
+                  className="ai-report-content"
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(entry.report) }}
+                />
               </div>
             ))}
           </div>
