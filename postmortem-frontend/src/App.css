@@ -102,16 +102,18 @@ button:hover {
   }
 }
 
-/* AI Report Box (HTML or raw) */
+<<<<<<< HEAD
+/* --- AI Report Styling --- */
 .ai-report {
   background: rgba(0, 114, 255, 0.08);
   padding: 2rem;
   margin-top: 2rem;
   border-radius: 12px;
   animation: fadeIn 1s ease-in;
+  font-family: 'Segoe UI', sans-serif;
   font-size: 1rem;
   color: inherit;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 .ai-report h2 {
@@ -127,6 +129,7 @@ button:hover {
   line-height: 1.6;
 }
 
+/* Optional: Style headings, lists, tables in AI output */
 .ai-report-content h1,
 .ai-report-content h2,
 .ai-report-content h3 {
@@ -134,44 +137,43 @@ button:hover {
   margin-bottom: 0.5em;
   font-weight: 600;
 }
-
 .ai-report-content ul,
 .ai-report-content ol {
   margin-left: 1.5em;
 }
-
 .ai-report-content table {
   border-collapse: collapse;
   width: 100%;
   margin: 1em 0;
 }
-
 .ai-report-content th,
 .ai-report-content td {
   border: 1px solid #ddd;
   padding: 0.5em;
 }
-
 .ai-report-content tr:nth-child(even) {
   background: #f9f9f9;
 }
 
+/* Dark mode support for AI report */
 body.dark .ai-report {
   background: rgba(0, 114, 255, 0.15);
   color: #f2f2f2;
 }
-
 body.dark .ai-report-content table,
 body.dark .ai-report-content th,
 body.dark .ai-report-content td {
   border-color: #333;
 }
-
 body.dark .ai-report-content tr:nth-child(even) {
   background: #23272f;
 }
 
-/* Structured Report Style (split by headings) */
+/* --- End AI Report Styling --- */
+
+=======
+/* Report Styling */
+>>>>>>> b391b5a59dc4d363d262a169933d1cd8b44158f1
 .report {
   background: rgba(0, 114, 255, 0.1);
   padding: 1.5rem;
