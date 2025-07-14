@@ -1,41 +1,104 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import 'bootstrap/dist/css/bootstrap.min.css';
+// src/App.js
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import "./App.css";
 
 function App() {
-  const [url, setUrl] = useState('');
-  const [report, setReport] = useState('');
+  const [url, setUrl] = useState("");
+  const [report, setReport] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState(() => {
+    const saved = localStorage.getItem("analysisHistory");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [darkMode, setDarkMode] = useState(true);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    document.body.className = darkMode ? "dark" : "light";
+  }, [darkMode]);
+
+  const handleAnalyze = async () => {
+    if (!url.trim()) return;
+    setLoading(true);
     try {
-      const response = await axios.post('http://localhost:8000/analyze', { url });
-      setReport(response.data.report);
+      const response = await axios.post("http://localhost:8000/analyze", { url });
+      const generatedReport = response.data.report;
+      setReport(generatedReport);
+      saveReport(url, generatedReport);
+      setTimeout(() => {
+        document.getElementById("report")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
     } catch (error) {
-      setReport('Error: ' + error.message);
+      setReport("Error analyzing video.");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const saveReport = (url, report) => {
+    const newEntry = { url, report, date: new Date().toLocaleString() };
+    const updatedHistory = [newEntry, ...history];
+    setHistory(updatedHistory);
+    localStorage.setItem("analysisHistory", JSON.stringify(updatedHistory));
+  };
+
+  const exportPDF = async () => {
+    const input = document.getElementById("report");
+    const canvas = await html2canvas(input);
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF();
+    pdf.addImage(imgData, "PNG", 10, 10);
+    pdf.save("postmortem_report.pdf");
+  };
+
   return (
-    <div className="container mt-5">
-      <h2 className="mb-4">PostMortem AI</h2>
-      <form onSubmit={handleSubmit}>
+    <div className="App">
+      <header>
+        <h1>🎥 PostMortem AI</h1>
+        <button onClick={() => setDarkMode(!darkMode)} className="toggle-btn">
+          {darkMode ? "☀️ Light" : "🌙 Dark"}
+        </button>
+      </header>
+
+      <main>
         <input
           type="text"
-          className="form-control mb-3"
+          placeholder="Paste YouTube URL..."
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="Paste YouTube URL"
-          required
         />
-        <button type="submit" className="btn btn-primary">Analyze</button>
-      </form>
-      {report && (
-        <div className="bg-light p-4 mt-4 rounded">
-          <h4>AI Report:</h4>
-          <pre style={{ whiteSpace: 'pre-wrap' }}>{report}</pre>
-        </div>
-      )}
+        <button onClick={handleAnalyze}>Analyze</button>
+
+        {loading && (
+          <div className="spinner-container">
+            <div className="spinner"></div>
+            <p>Analyzing...</p>
+          </div>
+        )}
+
+        {report && (
+          <div id="report" className="report">
+            <h2>📊 AI Analysis Report</h2>
+            <p>{report}</p>
+            <button onClick={exportPDF}>📄 Export as PDF</button>
+          </div>
+        )}
+
+        {history.length > 0 && (
+          <div className="history">
+            <h3>Previous Analyses</h3>
+            {history.map((entry, index) => (
+              <div key={index} className="history-item">
+                <p><strong>{entry.date}</strong></p>
+                <a href={entry.url} target="_blank" rel="noreferrer">{entry.url}</a>
+                <pre>{entry.report}</pre>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }
