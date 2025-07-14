@@ -14,6 +14,7 @@ function App() {
     return saved ? JSON.parse(saved) : [];
   });
   const [darkMode, setDarkMode] = useState(true);
+  const [activePopup, setActivePopup] = useState(null);
 
   useEffect(() => {
     document.body.className = darkMode ? "dark" : "light";
@@ -62,43 +63,72 @@ function App() {
         </button>
       </header>
 
-      <main>
-        <input
-          type="text"
-          placeholder="Paste YouTube URL..."
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-        />
-        <button onClick={handleAnalyze}>Analyze</button>
+      <div className="main-section">
+        <aside className="history-panel">
+          <h3>Previous Analyses</h3>
+          {history.map((entry, index) => (
+            <div
+              key={index}
+              className="history-preview"
+              onClick={() => setActivePopup(entry)}
+            >
+              <p><strong>{entry.date}</strong></p>
+              <p>{entry.report.split("\n")[0]}</p>
+            </div>
+          ))}
+        </aside>
 
-        {loading && (
-          <div className="spinner-container">
-            <div className="spinner"></div>
-            <p>Analyzing...</p>
-          </div>
-        )}
+        <main>
+          <input
+            type="text"
+            placeholder="Paste YouTube URL..."
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+          <button onClick={handleAnalyze}>Analyze</button>
 
-        {report && (
-          <div id="report" className="report">
-            <h2>📊 AI Analysis Report</h2>
-            <p>{report}</p>
-            <button onClick={exportPDF}>📄 Export as PDF</button>
-          </div>
-        )}
+          {loading && (
+            <div className="spinner-container">
+              <div className="spinner"></div>
+              <p>Analyzing...</p>
+            </div>
+          )}
 
-        {history.length > 0 && (
-          <div className="history">
-            <h3>Previous Analyses</h3>
-            {history.map((entry, index) => (
-              <div key={index} className="history-item">
-                <p><strong>{entry.date}</strong></p>
-                <a href={entry.url} target="_blank" rel="noreferrer">{entry.url}</a>
-                <pre>{entry.report}</pre>
-              </div>
-            ))}
+          {report && (
+            <div id="report" className="report">
+              <h2>📊 AI Analysis Report</h2>
+              {report.split(/\n(?=\d+\.)/).map((line, i) => {
+                const [heading, ...rest] = line.split(":");
+                return (
+                  <div key={i} className="report-section">
+                    <h3 className="report-subheading">{heading}</h3>
+                    <p className="report-explanation">{rest.join(":").trim()}</p>
+                  </div>
+                );
+              })}
+              <button onClick={exportPDF}>📄 Export as PDF</button>
+            </div>
+          )}
+        </main>
+      </div>
+
+      {activePopup && (
+        <div className="popup-overlay" onClick={() => setActivePopup(null)}>
+          <div className="popup" onClick={(e) => e.stopPropagation()}>
+            <h2>📜 Report from {activePopup.date}</h2>
+            {activePopup.report.split(/\n(?=\d+\.)/).map((line, i) => {
+              const [heading, ...rest] = line.split(":");
+              return (
+                <div key={i} className="report-section">
+                  <h3 className="report-subheading">{heading}</h3>
+                  <p className="report-explanation">{rest.join(":").trim()}</p>
+                </div>
+              );
+            })}
+            <button onClick={() => setActivePopup(null)}>Close</button>
           </div>
-        )}
-      </main>
+        </div>
+      )}
     </div>
   );
 }
