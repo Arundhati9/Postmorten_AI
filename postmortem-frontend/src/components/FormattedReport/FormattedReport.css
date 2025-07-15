@@ -1,0 +1,18 @@
+.ai-report-content {
+  line-height: 1.7;
+  padding-top: 1rem;
+}
+
+.report-heading {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem;
+  color: #00c6ff;
+}
+
+.report-paragraph {
+  font-size: 1rem;
+  color: var(--text-color, #ccc);
+  margin-left: 0.5rem;
+  margin-bottom: 0.75rem;
+}

@@ -12,6 +12,8 @@ import HistoryPanel from "./components/HistoryPanel/HistoryPanel";
 import Spinner from "./components/Spinner/Spinner";
 import Report from "./components/Report/Report";
 import Popup from "./components/Popup/Popup";
+import FormattedReport from "./components/FormattedReport/FormattedReport";
+
 
 import "./App.css";
 
@@ -168,7 +170,15 @@ function App() {
 
           {loading && <Spinner message={stepMessage} />}
 
-          {report && <Report report={report} onExport={exportPDF} />}
+          {/* {report && <Report report={report} onExport={exportPDF} />} */}
+          {report && (
+            <div id="report" className="report">
+              <h2>📊 AI Analysis Report</h2>
+              <FormattedReport rawReport={report} />
+              <button onClick={exportPDF}>📄 Export as PDF</button>
+            </div>
+          )}
+
         </main>
       </div>
 
