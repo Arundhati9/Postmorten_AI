@@ -6,14 +6,18 @@
 }
 
 body, html, #root {
+/* Reset & base */
+body, html, #root, .App {
   margin: 0;
   padding: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Themes */
 body.light {
   --bg-color: #f2f4f6;
   --text-color: #1a1a1a;
@@ -29,10 +33,14 @@ body.dark {
 }
 
 /* ========== Layout Base ========== */
+/* App layout */
 .App {
   display: flex;
   flex-direction: column;
   margin-left: 260px;
+  flex: 1;
+  max-width: 1000px;
+  margin-left: 240px; /* for sidebar */
   padding: 2rem;
   transition: all 0.3s ease-in-out;
   max-width: 100%;
@@ -330,6 +338,18 @@ button:disabled {
 }
 .toastify-success {
   background: #4caf50 !important;
+/* Report Styling */
+.report {
+  background: rgba(0, 114, 255, 0.1);
+  padding: 1.5rem;
+  margin-top: 2rem;
+  border-radius: 12px;
+  animation: fadeIn 1s ease-in;
+}
+
+.report h2 {
+  margin-bottom: 1rem;
+  color: #00c6ff;
 }
 
 /* ========== Responsive ========== */
@@ -361,5 +381,112 @@ button:disabled {
   .popup {
     padding: 1.5rem;
     border-radius: 12px;
+
+.report-section {
+  margin-bottom: 16px;
+}
+
+.report-subheading {
+  font-weight: 600;
+  font-size: 18px;
+  color: #c1c1ff;
+}
+
+.report-explanation {
+  font-size: 16px;
+  color: #d0d0d0;
+  margin-left: 8px;
+  margin-top: 4px;
+}
+
+/* History Sidebar */
+.history-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 100%;
+  background-color: #1e1e2f;
+  color: #fff;
+  overflow-y: auto;
+  padding: 20px 10px;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.history-panel h3 {
+  margin-bottom: 10px;
+  text-align: center;
+  color: #00c6ff;
+}
+
+.history-preview {
+  padding: 10px;
+  border-bottom: 1px solid #444;
+  cursor: pointer;
+}
+
+.history-preview:hover {
+  background-color: #2c2c3a;
+}
+
+.history-preview p {
+  font-size: 12px;
+  color: #ccc;
+  margin: 2px 0;
+}
+
+/* Popup Modal */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(18, 18, 18, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99;
+}
+
+.popup {
+  background: #1e1e2f;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  color: #f0f0f0;
+  animation: fadeIn 0.3s ease-in-out;
+  overflow-y: auto;
+  max-height: 80vh;
+  position: relative;
+}
+
+.popup h2 {
+  color: #00c6ff;
+  margin-bottom: 1rem;
+}
+
+.popup button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #444;
+  border: none;
+  color: white;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

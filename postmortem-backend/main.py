@@ -91,7 +91,7 @@ async def analyze(request: Request):
         data = await request.json()
         url = data.get("url")
         language = data.get("language", "en")
-
+        print("URL received!")
         if not url:
             return JSONResponse(status_code=400, content={"detail": "🎯 You must provide a URL."})
 
@@ -241,12 +241,10 @@ Make your response in {lang_name}. Include 3 performance issues, 3 quick fixes, 
             "transcript_excerpt": transcript_excerpt,
         }
 
-        # Start background task
-        task_id = f"task-{int(time.time()*1000)}"
-        TASKS[task_id] = {"status": "processing"}
-        asyncio.create_task(analyze_video_llm(task_id, prompt, summary))
-
-        return {"task_id": task_id, "status": "processing"}
+        # CACHE[cache_key] = {"data": response, "timestamp": now}/
+        CACHE[url]=response
+        
+        return response
 
     except Exception as e:
         logging.error("❌ Analyze error", exc_info=True)
