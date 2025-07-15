@@ -4,7 +4,7 @@ openai
 youtube_dl
 python-multipart
 requests
-DomPurify
+dompurify
 react-toastify
 react-top-loading-bar
 httpx

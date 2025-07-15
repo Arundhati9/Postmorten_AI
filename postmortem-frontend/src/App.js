@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
-import React, { useState, useEffect } from "react";
+// import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -7,7 +6,13 @@ import DOMPurify from "dompurify";
 import LoadingBar from "react-top-loading-bar";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import DOMPurify from "dompurify"; // Secure HTML rendering
+import React, { useState, useEffect, useRef } from "react";
+import Header from "./components/Header/Header";
+import HistoryPanel from "./components/HistoryPanel/HistoryPanel";
+import Spinner from "./components/Spinner/Spinner";
+import Report from "./components/Report/Report";
+import Popup from "./components/Popup/Popup";
+
 import "./App.css";
 
 function App() {
@@ -21,6 +26,7 @@ function App() {
   });
   const [darkMode, setDarkMode] = useState(true);
   const [activePopup, setActivePopup] = useState(null);
+
   const loadingBar = useRef(null);
   const pollingRef = useRef(null);
 
@@ -55,13 +61,11 @@ function App() {
       await new Promise((res) => setTimeout(res, 500));
       setStepMessage("🤖 Generating AI report...");
 
-      // Start analysis (API returns a task_id)
       const response = await axios.post("http://localhost:8000/analyze", { url });
 
       if (response.data.task_id) {
         pollForResult(response.data.task_id, url);
       } else if (response.data.report) {
-        // (Cache hit)
         displayReport(response.data.report, url);
       } else {
         throw new Error("Unexpected backend response");
@@ -79,19 +83,12 @@ function App() {
   const pollForResult = async (taskId, analyzedUrl, pollCount = 0) => {
     setStepMessage("⏳ Waiting for AI analysis...");
     try {
-      // Wait between polls; increase interval slowly to rate limit
       await new Promise((res) => setTimeout(res, 1500 + Math.min(pollCount, 4) * 500));
 
       const res = await axios.get(`http://localhost:8000/result/${taskId}`);
       if (res.data.status === "processing") {
-        if (pollCount > 25) {
-          // Time out after ~45 seconds
-          throw new Error("Analysis timed out. Please retry.");
-        }
-        pollingRef.current = setTimeout(
-          () => pollForResult(taskId, analyzedUrl, pollCount + 1),
-          0
-        );
+        if (pollCount > 25) throw new Error("Analysis timed out. Please retry.");
+        pollingRef.current = setTimeout(() => pollForResult(taskId, analyzedUrl, pollCount + 1), 0);
       } else if (res.data.status === "done" && res.data.report) {
         displayReport(res.data.report, analyzedUrl);
       } else if (res.data.status === "error" || res.data.error) {
@@ -101,7 +98,6 @@ function App() {
         setStepMessage("");
         loadingBar.current?.complete();
       } else {
-        // If report is returned without explicit status
         if (res.data.report) {
           displayReport(res.data.report, analyzedUrl);
         } else {
@@ -150,41 +146,14 @@ function App() {
     pdf.save("postmortem_report.pdf");
   };
 
-  const renderSanitizedReport = (rawReport) => {
-    return (
-      <div
-        className="ai-report-content"
-        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(rawReport) }}
-      />
-    );
-  };
-
   return (
     <div className="App">
       <LoadingBar color="#00c6ff" height={3} ref={loadingBar} />
       <ToastContainer position="top-center" autoClose={3000} />
-
-      <header>
-        <h1>🎥 PostMortem AI</h1>
-        <button onClick={() => setDarkMode(!darkMode)} className="toggle-btn">
-          {darkMode ? "☀️ Light" : "🌙 Dark"}
-        </button>
-      </header>
+      <Header darkMode={darkMode} setDarkMode={setDarkMode} />
 
       <div className="main-section">
-        <aside className="history-panel">
-          <h3>Previous Analyses</h3>
-          {history.map((entry, index) => (
-            <div
-              key={index}
-              className="history-preview"
-              onClick={() => setActivePopup(entry)}
-            >
-              <p><strong>{entry.date}</strong></p>
-              <p>{entry.report.split("\n")[0]}</p>
-            </div>
-          ))}
-        </aside>
+        <HistoryPanel history={history} onSelect={setActivePopup} />
 
         <main>
           <input
@@ -197,32 +166,13 @@ function App() {
             {loading ? "Analyzing..." : "Analyze"}
           </button>
 
-          {loading && (
-            <div className="spinner-container">
-              <div className="spinner"></div>
-              <p>{stepMessage}</p>
-            </div>
-          )}
+          {loading && <Spinner message={stepMessage} />}
 
-          {report && (
-            <div id="report" className="report">
-              <h2>📊 AI Analysis Report</h2>
-              {renderSanitizedReport(report)}
-              <button onClick={exportPDF}>📄 Export as PDF</button>
-            </div>
-          )}
+          {report && <Report report={report} onExport={exportPDF} />}
         </main>
       </div>
 
-      {activePopup && (
-        <div className="popup-overlay" onClick={() => setActivePopup(null)}>
-          <div className="popup" onClick={(e) => e.stopPropagation()}>
-            <h2>📜 Report from {activePopup.date}</h2>
-            {renderSanitizedReport(activePopup.report)}
-            <button onClick={() => setActivePopup(null)}>Close</button>
-          </div>
-        </div>
-      )}
+      {activePopup && <Popup entry={activePopup} onClose={() => setActivePopup(null)} />}
     </div>
   );
 }

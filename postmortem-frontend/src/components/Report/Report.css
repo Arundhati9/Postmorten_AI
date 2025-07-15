@@ -1,0 +1,23 @@
+.report {
+  background: rgba(0, 114, 255, 0.1);
+  padding: 1.5rem;
+  margin-top: 2rem;
+  border-radius: 12px;
+  animation: fadeIn 1s ease-in;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.report h2 {
+  margin-bottom: 1rem;
+  color: #00c6ff;
+  font-size: 1.8rem;
+}
+
+.ai-report-content p,
+.ai-report-content li {
+  line-height: 1.65;
+  margin-bottom: 0.9rem;
+  color: #eaeaea;
+}

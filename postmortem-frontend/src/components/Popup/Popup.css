@@ -1,0 +1,49 @@
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  z-index: 1000;
+  animation: fadeIn 0.4s ease;
+}
+
+.popup {
+  position: relative;
+  background: #1e1e2f;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+  width: 100%;
+  max-width: 700px;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: fadeInUp 0.4s ease;
+  color: #f0f0f0;
+}
+
+.popup h2 {
+  font-size: 1.4rem;
+  color: #00c6ff;
+  margin-bottom: 1.2rem;
+}
+
+.popup button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #444;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.popup button:hover {
+  background: #666;
+}
+
