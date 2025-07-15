@@ -11,25 +11,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from openai import OpenAI
 
-# YouTube API helper
 from yt_helper import get_video_stats, get_channel_stats
 
-# Load environment variables
 load_dotenv()
 
-# Logging
 logging.basicConfig(level=logging.INFO)
 
-# LLM Client (OpenRouter)
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv("OPENROUTER_API_KEY"),
 )
 
-# FastAPI App
 app = FastAPI()
 
-# CORS Config
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -38,7 +32,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Caching
 CACHE = {}
 TASKS = {}
 CACHE_EXPIRY = 3600
@@ -91,7 +84,7 @@ async def analyze(request: Request):
         data = await request.json()
         url = data.get("url")
         language = data.get("language", "en")
-        print("URL received!")
+
         if not url:
             return JSONResponse(status_code=400, content={"detail": "🎯 You must provide a URL."})
 
@@ -100,7 +93,6 @@ async def analyze(request: Request):
         if cache_key in CACHE and now - CACHE[cache_key]["timestamp"] < CACHE_EXPIRY:
             return JSONResponse(content=CACHE[cache_key]["result"])
 
-        # Extract Video ID
         match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", url)
         video_id = match.group(1) if match else None
         if not video_id:
@@ -108,34 +100,32 @@ async def analyze(request: Request):
 
         use_fallback = False
 
-        # Try YouTube Data API
         try:
             video_stats = await get_video_stats(video_id)
-            channel_id = video_stats.get("channel_id", "")
+            channel_id = video_stats.get("channel_id")
             if not video_stats or not channel_id:
-                raise Exception("Incomplete data from API")
+                raise Exception("Incomplete video stats")
 
             channel_stats = await get_channel_stats(channel_id)
 
-            title = video_stats.get("title", "")
-            description = video_stats.get("description", "")
+            title = video_stats.get("title")
+            description = video_stats.get("description")
             tags = video_stats.get("tags", [])
-            duration = int(video_stats.get("duration", 0))
+            duration = video_stats.get("duration", 0)
             upload_date = video_stats.get("upload_date", "Unknown")
             category = video_stats.get("category", "Unknown")
             channel = video_stats.get("channel_title", "Unknown")
             thumbnail = video_stats.get("thumbnail", "")
             channel_url = f"https://www.youtube.com/channel/{channel_id}"
-            view_count = int(video_stats.get("views", 0))
-            like_count = int(video_stats.get("likes", 0))
-            comment_count = int(video_stats.get("comments", 0))
-            subscriber_count = int(channel_stats.get("subscriber_count", 0))
+            view_count = video_stats.get("views", 0)
+            like_count = video_stats.get("likes", 0)
+            comment_count = video_stats.get("comments", 0)
+            subscriber_count = channel_stats.get("subscriber_count", 0)
 
         except Exception as e:
             logging.warning(f"⚠️ YouTube API failed. Falling back to yt_dlp. Reason: {e}")
             use_fallback = True
 
-        # yt_dlp fallback
         if use_fallback:
             ydl_opts = {
                 "quiet": True,
@@ -190,11 +180,9 @@ async def analyze(request: Request):
         transcript_excerpt = (await fetch_subtitle_text(subtitles_url)).strip()[:1000] or "No subtitles available."
         lang_name = {"en": "English", "hi": "Hindi", "bn": "Bengali"}.get(language, "English")
 
-        # Performance calculations
         retention_rate = round(40.0, 2) if duration > 0 else 0
         interaction_rate = round(((like_count + comment_count) / view_count) * 100, 2) if view_count > 0 else 0
 
-        # Prompt
         prompt = f"""
 You're a senior YouTube strategist. Analyze the video using metadata, performance, transcript, and channel context.
 
@@ -241,10 +229,13 @@ Make your response in {lang_name}. Include 3 performance issues, 3 quick fixes, 
             "transcript_excerpt": transcript_excerpt,
         }
 
-        # CACHE[cache_key] = {"data": response, "timestamp": now}/
-        CACHE[url]=response
-        
-        return response
+        task_id = f"task-{int(time.time()*1000)}"
+        TASKS[task_id] = {"status": "processing"}
+        asyncio.create_task(analyze_video_llm(task_id, prompt, summary))
+
+        CACHE[cache_key] = {"result": {"task_id": task_id, "status": "processing"}, "timestamp": now}
+
+        return {"task_id": task_id, "status": "processing"}
 
     except Exception as e:
         logging.error("❌ Analyze error", exc_info=True)
