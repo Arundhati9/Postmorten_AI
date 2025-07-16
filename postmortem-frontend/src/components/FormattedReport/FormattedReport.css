@@ -1,18 +1,39 @@
 .ai-report-content {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  padding: 1.75rem;
+  border-radius: 12px;
   line-height: 1.7;
-  padding-top: 1rem;
+  font-family: var(--font-main, 'Inter', sans-serif);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.report-heading {
-  font-size: medium;
+/* Main Headings (### Performance Issues) */
+.report-section-heading {
+  font-size: 1.6rem;
+  color: #00bcd4;
+  margin: 2rem 0 1rem;
+  border-bottom: 2px solid #00bcd4;
+  padding-bottom: 0.3rem;
   font-weight: 700;
-  margin: 1rem 0 0.5rem;
-  color: #00c6ff;
+  font-family: 'Poppins', sans-serif;
 }
 
-.report-paragraph {
-  font-size: small;
-  color: var(--text-color, #ccc);
-  margin-left: 0.5rem;
+/* Sub-Bullet Titles (1. Something...) */
+.report-bullet-title {
+  font-size: 1.15rem;
+  color: #ab47bc;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem 0.5rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Body Paragraphs */
+.report-body-text {
+  font-size: 0.95rem;
+  color: #b0bec5;
+  margin-left: 1rem;
   margin-bottom: 0.75rem;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.6;
 }

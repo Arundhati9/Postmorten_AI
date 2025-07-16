@@ -1,4 +1,9 @@
-// import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/600.css";
+import "@fontsource/poppins/600.css";
+import "@fontsource/poppins/700.css";
+
 import axios from "axios";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -6,7 +11,7 @@ import DOMPurify from "dompurify";
 import LoadingBar from "react-top-loading-bar";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import React, { useState, useEffect, useRef } from "react";
+
 import Header from "./components/Header/Header";
 import HistoryPanel from "./components/HistoryPanel/HistoryPanel";
 import Spinner from "./components/Spinner/Spinner";
@@ -15,7 +20,6 @@ import Popup from "./components/Popup/Popup";
 import FormattedReport from "./components/FormattedReport/FormattedReport";
 import VideoPreview from "./components/VideoPreview/VideoPreview";
 import "./App.css";
-
 
 // Extracts the YouTube Video ID from various URL formats
 const extractYouTubeVideoId = (url) => {
@@ -36,13 +40,16 @@ function App() {
   });
   const [darkMode, setDarkMode] = useState(true);
   const [activePopup, setActivePopup] = useState(null);
+  const [videoId, setVideoId] = useState(null);
 
   const loadingBar = useRef(null);
-  const pollingRef = useRef(null);
+  const pollingTimeout = useRef(null);
 
+  // Apply light/dark mode class to <body>
   useEffect(() => {
-    document.body.className = darkMode ? "dark" : "light";
-    return () => clearTimeout(pollingRef.current);
+    document.body.classList.toggle("dark", darkMode);
+    document.body.classList.toggle("light", !darkMode);
+    return () => clearTimeout(pollingTimeout.current);
   }, [darkMode]);
 
   const isValidYouTubeUrl = (url) => {
@@ -50,7 +57,6 @@ function App() {
       /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
     return regex.test(url);
   };
-  const [videoId, setVideoId] = useState(null);
 
   const handleAnalyze = async () => {
     if (!url.trim()) return;
@@ -68,7 +74,6 @@ function App() {
     try {
       await new Promise((res) => setTimeout(res, 500));
       setStepMessage("📡 Sending data to backend...");
-
       await new Promise((res) => setTimeout(res, 500));
       setStepMessage("🤖 Generating AI report...");
 
@@ -93,13 +98,20 @@ function App() {
 
   const pollForResult = async (taskId, analyzedUrl, pollCount = 0) => {
     setStepMessage("⏳ Waiting for AI analysis...");
+
     try {
-      await new Promise((res) => setTimeout(res, 1500 + Math.min(pollCount, 4) * 500));
+      await new Promise((res) =>
+        setTimeout(res, 1500 + Math.min(pollCount, 4) * 500)
+      );
 
       const res = await axios.get(`http://localhost:8000/result/${taskId}`);
+
       if (res.data.status === "processing") {
         if (pollCount > 25) throw new Error("Analysis timed out. Please retry.");
-        pollingRef.current = setTimeout(() => pollForResult(taskId, analyzedUrl, pollCount + 1), 0);
+        pollingTimeout.current = setTimeout(
+          () => pollForResult(taskId, analyzedUrl, pollCount + 1),
+          0
+        );
       } else if (res.data.status === "done" && res.data.report) {
         displayReport(res.data.report, analyzedUrl);
       } else if (res.data.status === "error" || res.data.error) {
@@ -109,11 +121,7 @@ function App() {
         setStepMessage("");
         loadingBar.current?.complete();
       } else {
-        if (res.data.report) {
-          displayReport(res.data.report, analyzedUrl);
-        } else {
-          throw new Error("Unknown backend response format.");
-        }
+        throw new Error("Unknown backend response format.");
       }
     } catch (err) {
       console.error("Polling error:", err);
@@ -152,16 +160,17 @@ function App() {
     localStorage.setItem("analysisHistory", JSON.stringify(updatedHistory));
   };
 
-
   const exportPDF = async () => {
     const input = document.getElementById("report");
     if (!input) return;
+
     const canvas = await html2canvas(input);
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
     const imgProps = pdf.getImageProperties(imgData);
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
     pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
     pdf.save("postmortem_report.pdf");
   };
@@ -173,13 +182,11 @@ function App() {
       <Header darkMode={darkMode} setDarkMode={setDarkMode} />
 
       <div className="main-section">
-        {/* <HistoryPanel history={history} onSelect={setActivePopup} /> */}
         <HistoryPanel
           history={history}
           onSelect={setActivePopup}
           onDelete={deleteReport}
         />
-
 
         <main>
           <div className="search-bar-with-icon">
@@ -215,7 +222,6 @@ function App() {
             </button>
           </div>
 
-
           {loading && <Spinner message={stepMessage} />}
 
           {report && (
@@ -227,7 +233,6 @@ function App() {
             </div>
           )}
         </main>
-
       </div>
 
       {activePopup && <Popup entry={activePopup} onClose={() => setActivePopup(null)} />}

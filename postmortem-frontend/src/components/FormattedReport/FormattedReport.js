@@ -1,31 +1,43 @@
 import React from "react";
-import DOMPurify from "dompurify";
 import "./FormattedReport.css";
 
-const formatReport = (text) => {
-  const lines = text.split("\n").filter((line) => line.trim() !== "");
-
-  const formatted = lines.map((line, index) => {
-    if (/^(\d+\.|[-*•])\s*/.test(line) || /[:：]$/.test(line.trim())) {
-      return `<h3 class="report-heading" key=${index}>${line.trim()}</h3>`;
-    } else {
-      return `<p class="report-paragraph" key=${index}>${line.trim()}</p>`;
-    }
-  });
-
-  return formatted.join("");
-};
-
 const FormattedReport = ({ rawReport }) => {
-  const formattedHtml = formatReport(rawReport);
+  if (!rawReport) return null;
+
+  const lines = rawReport
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "");
 
   return (
-    <div
-      className="ai-report-content"
-      dangerouslySetInnerHTML={{
-        __html: DOMPurify.sanitize(formattedHtml),
-      }}
-    />
+    <section className="ai-report-content" aria-label="AI Generated Report">
+      {lines.map((line, index) => {
+        // Main headings (### Title)
+        if (/^#{2,3}\s*/.test(line)) {
+          return (
+            <h2 className="report-section-heading" key={index}>
+              {line.replace(/^#+\s*/, "")}
+            </h2>
+          );
+        }
+
+        // Numbered or bullet subheadings (e.g., "1. Something")
+        if (/^(\d+\.\s+|[-*•]\s+)/.test(line)) {
+          return (
+            <h4 className="report-bullet-title" key={index}>
+              {line}
+            </h4>
+          );
+        }
+
+        // Paragraph text
+        return (
+          <p className="report-body-text" key={index}>
+            {line}
+          </p>
+        );
+      })}
+    </section>
   );
 };
 
