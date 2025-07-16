@@ -1,0 +1,122 @@
+.stats-overview {
+  margin-bottom: 2.5rem;
+  padding: 2rem;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 198, 255, 0.05));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 198, 255, 0.2);
+  box-shadow:
+    0 20px 60px rgba(0, 198, 255, 0.07),
+    0 10px 30px rgba(0, 198, 255, 0.08) inset;
+  animation: fadeInUp 0.7s ease-in-out both;
+  overflow: hidden;
+  position: relative;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.75rem;
+}
+
+.stat-box {
+  position: relative;
+  padding: 1.6rem 1.8rem;
+  border-radius: 22px;
+  background: radial-gradient(ellipse at top left, rgba(0, 198, 255, 0.07), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 6px 18px rgba(0, 198, 255, 0.12),
+    inset 0 0 0 1px rgba(0, 198, 255, 0.08);
+  transition: all 0.3s ease, transform 0.3s ease;
+  overflow: hidden;
+  z-index: 1;
+  cursor: default;
+}
+
+.stat-box:hover {
+  transform: translateY(-8px) scale(1.015);
+  box-shadow:
+    0 16px 30px rgba(0, 198, 255, 0.25),
+    inset 0 0 0 1px rgba(0, 198, 255, 0.15);
+  border: 1px solid rgba(0, 198, 255, 0.3);
+}
+
+.stat-box::before {
+  content: "";
+  position: absolute;
+  top: -15%;
+  left: -20%;
+  width: 160%;
+  height: 160%;
+  background: radial-gradient(circle, rgba(0, 198, 255, 0.2), transparent 80%);
+  filter: blur(60px);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: 0;
+}
+
+.stat-box:hover::before {
+  opacity: 0.3;
+}
+
+.stat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  font-size: 1.05rem;
+  font-family: "Poppins", sans-serif;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 1;
+  letter-spacing: 0.3px;
+}
+
+.icon {
+  font-size: 1.5rem;
+  color: #00c6ff;
+  transition: transform 0.3s ease, color 0.3s ease, text-shadow 0.3s ease;
+  z-index: 1;
+}
+
+.stat-box:hover .icon {
+  transform: scale(1.2);
+  color: #00eaff;
+  text-shadow: 0 0 8px #00eaff88;
+}
+
+.stat-box .value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-color);
+  position: relative;
+  z-index: 1;
+  letter-spacing: 0.5px;
+  transition: color 0.3s ease;
+  animation: popIn 0.5s ease forwards;
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

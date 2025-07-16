@@ -14,7 +14,6 @@ from openai import OpenAI
 from yt_helper import get_video_stats, get_channel_stats
 
 load_dotenv()
-
 logging.basicConfig(level=logging.INFO)
 
 client = OpenAI(
@@ -36,8 +35,10 @@ CACHE = {}
 TASKS = {}
 CACHE_EXPIRY = 3600
 
+
 def get_cache_key(url, language):
     return f"{url}:{language}"
+
 
 async def fetch_subtitle_text(sub_url):
     if not sub_url:
@@ -52,6 +53,7 @@ async def fetch_subtitle_text(sub_url):
             ])
     except Exception:
         return ""
+
 
 async def analyze_video_llm(task_id: str, prompt: str, summary: dict):
     try:
@@ -77,6 +79,20 @@ async def analyze_video_llm(task_id: str, prompt: str, summary: dict):
     except Exception as e:
         logging.error(f"❌ Task {task_id} failed", exc_info=True)
         TASKS[task_id] = {"error": str(e), "status": "error"}
+
+
+def estimate_seo_score(title: str, tags: list, description: str, duration: int) -> int:
+    score = 0
+    if 30 <= len(title) <= 70:
+        score += 25
+    if len(description) >= 100:
+        score += 25
+    if len(tags) >= 5:
+        score += 25
+    if 60 <= duration <= 900:
+        score += 25
+    return min(score, 100)
+
 
 @app.post("/analyze")
 async def analyze(request: Request):
@@ -121,6 +137,7 @@ async def analyze(request: Request):
             like_count = video_stats.get("likes", 0)
             comment_count = video_stats.get("comments", 0)
             subscriber_count = channel_stats.get("subscriber_count", 0)
+            impressions = video_stats.get("impressions", view_count * 3)
 
         except Exception as e:
             logging.warning(f"⚠️ YouTube API failed. Falling back to yt_dlp. Reason: {e}")
@@ -155,8 +172,16 @@ async def analyze(request: Request):
             like_count = int(info.get("like_count") or 0)
             comment_count = int(info.get("comment_count") or 0)
             subscriber_count = int(info.get("channel_follower_count") or 0)
+            impressions = view_count * 3
 
-        # Subtitle Extraction
+        # 📊 Metrics
+        ctr = round((view_count / impressions) * 100, 2) if impressions > 0 else 0
+        avg_view_duration = round(duration * 0.4, 2) if duration > 0 else 0
+        seo_score = estimate_seo_score(title, tags, description, duration)
+        interaction_rate = round(((like_count + comment_count) / view_count) * 100, 2) if view_count > 0 else 0
+        retention_rate = round((avg_view_duration / duration) * 100, 2) if duration > 0 else 0
+
+        # 📄 Transcript
         ydl_opts_subs = {
             "quiet": True,
             "skip_download": True,
@@ -180,9 +205,6 @@ async def analyze(request: Request):
         transcript_excerpt = (await fetch_subtitle_text(subtitles_url)).strip()[:1000] or "No subtitles available."
         lang_name = {"en": "English", "hi": "Hindi", "bn": "Bengali"}.get(language, "English")
 
-        retention_rate = round(40.0, 2) if duration > 0 else 0
-        interaction_rate = round(((like_count + comment_count) / view_count) * 100, 2) if view_count > 0 else 0
-
         prompt = f"""
 You're a senior YouTube strategist. Analyze the video using metadata, performance, transcript, and channel context.
 
@@ -203,8 +225,11 @@ You're a senior YouTube strategist. Analyze the video using metadata, performanc
 - Views: {view_count}
 - Likes: {like_count}
 - Comments: {comment_count}
-- Retention: {retention_rate}%
-- Engagement: {interaction_rate}%
+- CTR: {ctr}%
+- Avg. View Duration: {avg_view_duration}s
+- SEO Score: {seo_score}/100
+- Engagement Rate: {interaction_rate}%
+- Retention Rate: {retention_rate}%
 
 # Transcript (excerpt)
 {transcript_excerpt}
@@ -221,15 +246,18 @@ Make your response in {lang_name}. Include 3 performance issues, 3 quick fixes, 
             "views": view_count,
             "likes": like_count,
             "comments": comment_count,
-            "retention_rate": f"{retention_rate}%",
-            "interaction_rate": f"{interaction_rate}%",
             "duration": duration,
-            "subscriber_count": subscriber_count,
             "upload_date": upload_date,
-            "transcript_excerpt": transcript_excerpt,
+            "subscriber_count": subscriber_count,
+            "ctr": ctr,
+            "seo_score": seo_score,
+            "avg_view_duration": avg_view_duration,
+            "interaction_rate": interaction_rate,
+            "retention_rate": retention_rate,
+            "transcript_excerpt": transcript_excerpt
         }
 
-        task_id = f"task-{int(time.time()*1000)}"
+        task_id = f"task-{int(time.time() * 1000)}"
         TASKS[task_id] = {"status": "processing"}
         asyncio.create_task(analyze_video_llm(task_id, prompt, summary))
 
@@ -240,6 +268,7 @@ Make your response in {lang_name}. Include 3 performance issues, 3 quick fixes, 
     except Exception as e:
         logging.error("❌ Analyze error", exc_info=True)
         return JSONResponse(status_code=500, content={"detail": f"Server error: {str(e)}"})
+
 
 @app.get("/result/{task_id}")
 async def get_result(task_id: str):

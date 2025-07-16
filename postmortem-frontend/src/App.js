@@ -7,7 +7,6 @@ import "@fontsource/poppins/700.css";
 import axios from "axios";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import DOMPurify from "dompurify";
 import LoadingBar from "react-top-loading-bar";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -15,13 +14,14 @@ import "react-toastify/dist/ReactToastify.css";
 import Header from "./components/Header/Header";
 import HistoryPanel from "./components/HistoryPanel/HistoryPanel";
 import Spinner from "./components/Spinner/Spinner";
-import Report from "./components/Report/Report";
 import Popup from "./components/Popup/Popup";
 import FormattedReport from "./components/FormattedReport/FormattedReport";
 import VideoPreview from "./components/VideoPreview/VideoPreview";
+import StatsOverview from "./components/StatsOverview/StatsOverview";
+import VideoCharts from "./components/VideoCharts/VideoCharts";
+
 import "./App.css";
 
-// Extracts the YouTube Video ID from various URL formats
 const extractYouTubeVideoId = (url) => {
   const match = url.match(
     /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
@@ -32,6 +32,7 @@ const extractYouTubeVideoId = (url) => {
 function App() {
   const [url, setUrl] = useState("");
   const [report, setReport] = useState("");
+  const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [stepMessage, setStepMessage] = useState("");
   const [history, setHistory] = useState(() => {
@@ -45,7 +46,6 @@ function App() {
   const loadingBar = useRef(null);
   const pollingTimeout = useRef(null);
 
-  // Apply light/dark mode class to <body>
   useEffect(() => {
     document.body.classList.toggle("dark", darkMode);
     document.body.classList.toggle("light", !darkMode);
@@ -60,7 +60,6 @@ function App() {
 
   const handleAnalyze = async () => {
     if (!url.trim()) return;
-
     if (!isValidYouTubeUrl(url)) {
       toast.error("❌ Please enter a valid YouTube video URL.");
       return;
@@ -68,6 +67,7 @@ function App() {
 
     setLoading(true);
     setReport("");
+    setSummary(null);
     loadingBar.current?.continuousStart();
     setStepMessage("🔍 Extracting video data...");
 
@@ -82,7 +82,7 @@ function App() {
       if (response.data.task_id) {
         pollForResult(response.data.task_id, url);
       } else if (response.data.report) {
-        displayReport(response.data.report, url);
+        displayReport(response.data.report, response.data.summary, url);
       } else {
         throw new Error("Unexpected backend response");
       }
@@ -108,12 +108,11 @@ function App() {
 
       if (res.data.status === "processing") {
         if (pollCount > 25) throw new Error("Analysis timed out. Please retry.");
-        pollingTimeout.current = setTimeout(
-          () => pollForResult(taskId, analyzedUrl, pollCount + 1),
-          0
-        );
+        pollingTimeout.current = setTimeout(() => {
+          pollForResult(taskId, analyzedUrl, pollCount + 1);
+        }, 0);
       } else if (res.data.status === "done" && res.data.report) {
-        displayReport(res.data.report, analyzedUrl);
+        displayReport(res.data.report, res.data.summary, analyzedUrl);
       } else if (res.data.status === "error" || res.data.error) {
         toast.error("❌ AI service error: " + (res.data.error || "Unknown error"));
         setReport("❌ Error analyzing video.");
@@ -133,15 +132,21 @@ function App() {
     }
   };
 
-  const displayReport = (generatedReport, urlToSave) => {
+  const displayReport = (generatedReport, videoSummary, urlToSave) => {
     const id = extractYouTubeVideoId(urlToSave);
     setVideoId(id);
     setReport(generatedReport);
+    setSummary({
+      ...videoSummary,
+      retention_rate: parseFloat(((videoSummary?.avg_view_duration || 0) / (videoSummary?.duration || 1)) * 100).toFixed(2),
+      engagement_rate: parseFloat((((videoSummary?.likes || 0) + (videoSummary?.comments || 0)) / (videoSummary?.views || 1)) * 100).toFixed(2)
+    });
     saveReport(urlToSave, generatedReport);
     setLoading(false);
     setStepMessage("");
     loadingBar.current?.complete();
     toast.success("✅ Analysis complete!");
+
     setTimeout(() => {
       document.getElementById("report")?.scrollIntoView({ behavior: "smooth" });
     }, 300);
@@ -182,11 +187,7 @@ function App() {
       <Header darkMode={darkMode} setDarkMode={setDarkMode} />
 
       <div className="main-section">
-        <HistoryPanel
-          history={history}
-          onSelect={setActivePopup}
-          onDelete={deleteReport}
-        />
+        <HistoryPanel history={history} onSelect={setActivePopup} onDelete={deleteReport} />
 
         <main>
           <div className="search-bar-with-icon">
@@ -228,6 +229,14 @@ function App() {
             <div id="report" className="report">
               <h2>📊 AI Analysis Report</h2>
               <VideoPreview videoId={videoId} />
+              {summary && <StatsOverview summary={summary} />}
+              {summary && (
+                <VideoCharts
+                  ctr={summary.ctr}
+                  avgViewDuration={summary.avg_view_duration}
+                  seoScore={summary.seo_score}
+                />
+              )}
               <FormattedReport rawReport={report} />
               <button onClick={exportPDF}>📄 Export as PDF</button>
             </div>

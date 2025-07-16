@@ -12,7 +12,7 @@ const FormattedReport = ({ rawReport }) => {
   return (
     <section className="ai-report-content" aria-label="AI Generated Report">
       {lines.map((line, index) => {
-        // Main headings (### Title)
+        // Main headings (## or ###)
         if (/^#{2,3}\s*/.test(line)) {
           return (
             <h2 className="report-section-heading" key={index}>
@@ -21,7 +21,7 @@ const FormattedReport = ({ rawReport }) => {
           );
         }
 
-        // Numbered or bullet subheadings (e.g., "1. Something")
+        // Numbered or bullet subheadings (e.g., "1. Something" or "- Something")
         if (/^(\d+\.\s+|[-*•]\s+)/.test(line)) {
           return (
             <h4 className="report-bullet-title" key={index}>

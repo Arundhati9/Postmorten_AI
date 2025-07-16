@@ -2,3 +2,4 @@
 dompurify
 react-toastify
 react-top-loading-bar
+recharts

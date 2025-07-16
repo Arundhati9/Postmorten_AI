@@ -1,0 +1,90 @@
+.video-charts {
+  margin-top: 2.5rem;
+  padding: 2rem 2.2rem;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(0, 198, 255, 0.04));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 198, 255, 0.18);
+  box-shadow:
+    0 20px 60px rgba(0, 198, 255, 0.06),
+    0 8px 24px rgba(0, 198, 255, 0.06) inset;
+  animation: fadeInUp 0.7s ease-in-out both;
+  overflow: hidden;
+  position: relative;
+}
+
+.video-charts h3 {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: "Poppins", sans-serif;
+  color: var(--text-color, #ffffff);
+  margin-bottom: 1.8rem;
+  letter-spacing: 0.6px;
+  text-shadow: 0 0 3px rgba(0, 198, 255, 0.25);
+}
+
+.video-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.75rem;
+}
+
+/* Chart box */
+.chart-box {
+  position: relative;
+  padding: 1.6rem 1.4rem 1.2rem;
+  border-radius: 22px;
+  background: radial-gradient(ellipse at top left, rgba(0, 198, 255, 0.05), rgba(255, 255, 255, 0.02));
+  box-shadow:
+    0 6px 20px rgba(0, 198, 255, 0.1),
+    inset 0 0 0 1px rgba(0, 198, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  transition: all 0.3s ease, transform 0.3s ease;
+  z-index: 1;
+}
+
+.chart-box:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow:
+    0 16px 30px rgba(0, 198, 255, 0.25),
+    inset 0 0 0 1px rgba(0, 198, 255, 0.2);
+  border: 1px solid rgba(0, 198, 255, 0.3);
+}
+
+.chart-box::before {
+  content: "";
+  position: absolute;
+  top: -15%;
+  left: -20%;
+  width: 150%;
+  height: 150%;
+  background: radial-gradient(circle, rgba(0, 198, 255, 0.2), transparent 70%);
+  filter: blur(50px);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 0;
+}
+
+.chart-box:hover::before {
+  opacity: 0.25;
+}
+
+.chart-box h4 {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.9rem;
+  color: var(--text-color, #ffffff);
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 0 4px rgba(0, 198, 255, 0.25);
+}
+
+/* Animate entry */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
