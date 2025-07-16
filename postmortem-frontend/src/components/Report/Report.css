@@ -10,9 +10,13 @@
 }
 
 .report h2 {
+  top: 0; 
+  z-index: 10; 
+  position: sticky;
   margin-bottom: 1rem;
   color: #00c6ff;
   font-size: 1.8rem;
+  /* background-color: #eaeaea; */
 }
 
 .ai-report-content p,
@@ -20,4 +24,5 @@
   line-height: 1.65;
   margin-bottom: 0.9rem;
   color: #eaeaea;
+  font-size: small;
 }

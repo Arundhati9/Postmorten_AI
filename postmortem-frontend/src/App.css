@@ -1,8 +1,5 @@
 /* ===== Global Reset & Theme ===== */
-
-*, 
-*::before,
-*::after {
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
@@ -32,7 +29,7 @@ body {
   color: var(--text-color);
 }
 
-/* ===== Layout ===== */
+/* ===== App Layout ===== */
 .App {
   display: flex;
   flex-direction: column;
@@ -54,56 +51,51 @@ main {
   gap: 2rem;
 }
 
-/* ===== Header ===== */
-header {
+/* ===== Search Input with Paste Icon ===== */
+.search-bar-with-icon {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
-h1 {
-  font-size: 2rem;
-  font-weight: bold;
-  background: linear-gradient(90deg, #00c6ff, #0072ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.input-wrapper {
+  position: relative;
+  flex: 1;
 }
 
-/* ===== Toggle Button ===== */
-.toggle-btn {
-  background: transparent;
-  border: 1.5px solid currentColor;
-  border-radius: 10px;
-  padding: 0.4rem 0.8rem;
-  cursor: pointer;
-  color: inherit;
-  transition: all 0.3s;
-}
-
-.toggle-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* ===== Input & Button ===== */
-input[type="text"] {
+.input-wrapper input {
   width: 100%;
-  padding: 0.9rem 1.2rem;
-  border-radius: 12px;
-  border: 1.5px solid #555;
+  padding: 0.6rem 2.5rem 0.6rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
   background: var(--card-bg);
   color: var(--text-color);
-  font-size: 1rem;
-  transition: box-shadow 0.3s ease;
 }
 
-input:focus {
+.input-wrapper input:focus {
   border-color: #00c6ff;
   outline: none;
   box-shadow: 0 0 0 3px rgba(0, 198, 255, 0.2);
 }
 
+.paste-icon {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #00c6ff;
+  transition: color 0.3s;
+}
+
+.paste-icon:hover {
+  color: #0072ff;
+}
+
+/* ===== Button ===== */
 button {
   padding: 0.7rem 1.5rem;
   background: linear-gradient(90deg, #00c6ff, #0072ff);
@@ -125,34 +117,6 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* ===== Animations ===== */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 /* ===== Scrollbar ===== */
 ::-webkit-scrollbar {
@@ -168,7 +132,7 @@ button:disabled {
   background: #0072ff;
 }
 
-/* ===== Responsive ===== */
+/* ===== Responsive Adjustments ===== */
 @media (max-width: 768px) {
   .App {
     margin-left: 0;
@@ -180,13 +144,8 @@ button:disabled {
   }
 
   input,
-  button,
-  .toggle-btn {
+  button {
     font-size: 1rem;
     padding: 0.75rem 1.2rem;
-  }
-
-  h1 {
-    font-size: 1.8rem;
   }
 }

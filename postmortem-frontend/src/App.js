@@ -13,9 +13,17 @@ import Spinner from "./components/Spinner/Spinner";
 import Report from "./components/Report/Report";
 import Popup from "./components/Popup/Popup";
 import FormattedReport from "./components/FormattedReport/FormattedReport";
-
-
+import VideoPreview from "./components/VideoPreview/VideoPreview";
 import "./App.css";
+
+
+// Extracts the YouTube Video ID from various URL formats
+const extractYouTubeVideoId = (url) => {
+  const match = url.match(
+    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
+  );
+  return match ? match[1] : null;
+};
 
 function App() {
   const [url, setUrl] = useState("");
@@ -42,6 +50,7 @@ function App() {
       /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
     return regex.test(url);
   };
+  const [videoId, setVideoId] = useState(null);
 
   const handleAnalyze = async () => {
     if (!url.trim()) return;
@@ -117,6 +126,8 @@ function App() {
   };
 
   const displayReport = (generatedReport, urlToSave) => {
+    const id = extractYouTubeVideoId(urlToSave);
+    setVideoId(id);
     setReport(generatedReport);
     saveReport(urlToSave, generatedReport);
     setLoading(false);
@@ -130,10 +141,17 @@ function App() {
 
   const saveReport = (url, report) => {
     const newEntry = { url, report, date: new Date().toLocaleString() };
-    const updatedHistory = [newEntry, ...history];
+    const updatedHistory = [newEntry, ...history].slice(0, 10);
     setHistory(updatedHistory);
     localStorage.setItem("analysisHistory", JSON.stringify(updatedHistory));
   };
+
+  const deleteReport = (indexToDelete) => {
+    const updatedHistory = history.filter((_, index) => index !== indexToDelete);
+    setHistory(updatedHistory);
+    localStorage.setItem("analysisHistory", JSON.stringify(updatedHistory));
+  };
+
 
   const exportPDF = async () => {
     const input = document.getElementById("report");
@@ -155,31 +173,61 @@ function App() {
       <Header darkMode={darkMode} setDarkMode={setDarkMode} />
 
       <div className="main-section">
-        <HistoryPanel history={history} onSelect={setActivePopup} />
+        {/* <HistoryPanel history={history} onSelect={setActivePopup} /> */}
+        <HistoryPanel
+          history={history}
+          onSelect={setActivePopup}
+          onDelete={deleteReport}
+        />
+
 
         <main>
-          <input
-            type="text"
-            placeholder="Paste YouTube URL..."
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-          />
-          <button onClick={handleAnalyze} disabled={loading}>
-            {loading ? "Analyzing..." : "Analyze"}
-          </button>
+          <div className="search-bar-with-icon">
+            <div className="input-wrapper">
+              <input
+                type="text"
+                placeholder="Paste YouTube URL..."
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+              />
+              <span
+                className="paste-icon"
+                onClick={async () => {
+                  try {
+                    const text = await navigator.clipboard.readText();
+                    if (text.trim()) {
+                      setUrl(text);
+                      toast.success("✅ Link pasted from clipboard!");
+                    } else {
+                      toast.warn("📋 Clipboard is empty.");
+                    }
+                  } catch (err) {
+                    console.error("Clipboard error:", err);
+                    toast.error("❌ Unable to read clipboard.");
+                  }
+                }}
+              >
+                📋
+              </span>
+            </div>
+            <button onClick={handleAnalyze} disabled={loading}>
+              {loading ? "Analyzing..." : "Analyze"}
+            </button>
+          </div>
+
 
           {loading && <Spinner message={stepMessage} />}
 
-          {/* {report && <Report report={report} onExport={exportPDF} />} */}
           {report && (
             <div id="report" className="report">
               <h2>📊 AI Analysis Report</h2>
+              <VideoPreview videoId={videoId} />
               <FormattedReport rawReport={report} />
               <button onClick={exportPDF}>📄 Export as PDF</button>
             </div>
           )}
-
         </main>
+
       </div>
 
       {activePopup && <Popup entry={activePopup} onClose={() => setActivePopup(null)} />}
