@@ -57,7 +57,7 @@ async def analyze_video_llm(task_id: str, prompt: str, summary: dict):
     try:
         logging.info(f"🧠 Sending task {task_id} to model...")
         completion = client.chat.completions.create(
-            model="tngtech/deepseek-r1t2-chimera:free",
+            model="deepseek/deepseek-r1-0528:free",
             extra_headers={
                 "HTTP-Referer": "http://localhost:3000",
                 "X-Title": "PostMortem AI",
