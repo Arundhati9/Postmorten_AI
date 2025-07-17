@@ -20,6 +20,7 @@ import FormattedReport from "./components/FormattedReport/FormattedReport";
 import VideoPreview from "./components/VideoPreview/VideoPreview";
 import StatsOverview from "./components/StatsOverview/StatsOverview";
 import VideoCharts from "./components/VideoCharts/VideoCharts";
+import SentimentSummary from "./components/SentimentSummary/SentimentSummary";
 
 import "./App.css";
 
@@ -306,8 +307,9 @@ function App() {
                   seoScore={summary.seo_score}
                 />
               )}
+              <SentimentSummary sentiment={sentiment} />
 
-              {sentiment && (
+              {/* {sentiment && (
                 <div className="sentiment-summary">
                   <h3>🧠 Comment Sentiment Summary</h3>
                   <ul>
@@ -319,7 +321,7 @@ function App() {
                     </li>
                   </ul>
                 </div>
-              )}
+              )} */}
 
               <FormattedReport rawReport={report} />
               <button onClick={exportPDF}>📄 Export as PDF</button>
