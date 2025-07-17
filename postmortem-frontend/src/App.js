@@ -46,6 +46,8 @@ function App() {
   const [darkMode, setDarkMode] = useState(true);
   const [activePopup, setActivePopup] = useState(null);
   const [videoId, setVideoId] = useState(null);
+  const [showHistory, setShowHistory] = useState(window.innerWidth >= 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const loadingBar = useRef(null);
   const pollingTimeout = useRef(null);
@@ -55,6 +57,16 @@ function App() {
     document.body.classList.toggle("light", !darkMode);
     return () => clearTimeout(pollingTimeout.current);
   }, [darkMode]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setShowHistory(!mobile);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const isValidYouTubeUrl = (url) => {
     const regex =
@@ -201,6 +213,16 @@ function App() {
     pdf.save(`postmortem_report_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
+  const loadReport = (entry) => {
+    setUrl(entry.url);
+    setReport(entry.report);
+    const id = extractYouTubeVideoId(entry.url);
+    setVideoId(id);
+    setTimeout(() => {
+      document.getElementById("report")?.scrollIntoView({ behavior: "smooth" });
+    }, 300);
+  };
+
   return (
     <div className="App">
       <LoadingBar color="#00c6ff" height={3} ref={loadingBar} />
@@ -208,7 +230,19 @@ function App() {
       <Header darkMode={darkMode} setDarkMode={setDarkMode} />
 
       <div className="main-section">
-        <HistoryPanel history={history} onSelect={setActivePopup} onDelete={deleteReport} />
+        {isMobile && (
+          <button className="toggle-history-button" onClick={() => setShowHistory(!showHistory)}>
+            ☰ History
+          </button>
+        )}
+
+        <HistoryPanel
+          history={history}
+          onSelect={loadReport}
+          onDelete={deleteReport}
+          isMobile={isMobile}
+          visible={showHistory}
+        />
 
         <main>
           <div className="search-bar-with-icon">

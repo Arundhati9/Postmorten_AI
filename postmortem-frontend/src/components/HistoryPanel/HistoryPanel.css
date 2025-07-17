@@ -141,3 +141,29 @@
   background: linear-gradient(to bottom, #00c6ff, #00acc1);
   border-radius: 6px;
 }
+
+/* ========================================================================= */
+/* Default for desktop */
+
+/* Hide/show logic for mobile */
+@media (max-width: 767px) {
+  .history-panel {
+    position: absolute;
+    top: 4rem;
+    left: 1rem;
+    z-index: 999;
+    width: 90%;
+    background: #1c1c1c;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 198, 255, 0.3);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .history-panel.hide {
+    display: none;
+  }
+
+  .history-panel.show {
+    display: block;
+  }
+}
