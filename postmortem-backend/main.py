@@ -1,17 +1,26 @@
 import os
-import time
 import re
+import time
 import logging
 import asyncio
+from typing import Any, Dict, Optional, List
+
 import yt_dlp
 import httpx
+
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from openai import OpenAI
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from starlette.concurrency import run_in_threadpool
+
+import numpy as np
+import torch
 
 from yt_helper import get_video_stats, get_channel_stats
+from googleapiclient.discovery import build
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -20,6 +29,10 @@ client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv("OPENROUTER_API_KEY"),
 )
+
+tokenizer = AutoTokenizer.from_pretrained("cardiffnlp/twitter-roberta-base-sentiment")
+model = AutoModelForSequenceClassification.from_pretrained("cardiffnlp/twitter-roberta-base-sentiment")
+sentiment_labels = ['negative', 'neutral', 'positive']
 
 app = FastAPI()
 
@@ -35,10 +48,42 @@ CACHE = {}
 TASKS = {}
 CACHE_EXPIRY = 3600
 
+def clean_text(text: str) -> str:
+    text = re.sub(r"http\S+", "", text)
+    text = re.sub(r"@\w+", "", text)
+    text = re.sub(r"#\w+", "", text)
+    return text.strip()
+
+def analyze_sentiment(comment: str) -> str:
+    comment = clean_text(comment)
+    if not comment:
+        return "neutral"
+    inputs = tokenizer(comment, return_tensors="pt", truncation=True, max_length=512)
+    with torch.no_grad():
+        outputs = model(**inputs)
+    scores = outputs.logits[0].numpy()
+    probs = np.exp(scores) / np.sum(np.exp(scores))
+    label = sentiment_labels[np.argmax(probs)]
+    return label
+
+def compute_sentiment_percentages(comments: List[str]) -> Dict[str, float]:
+    pos, neg = 0, 0
+    for c in comments:
+        label = analyze_sentiment(c[:512])
+        if label == 'positive':
+            pos += 1
+        elif label == 'negative':
+            neg += 1
+    total = pos + neg
+    if total == 0:
+        return {"positive_percent": 0.0, "negative_percent": 0.0}
+    return {
+        "positive_percent": round((pos / total) * 100, 2),
+        "negative_percent": round((neg / total) * 100, 2)
+    }
 
 def get_cache_key(url, language):
     return f"{url}:{language}"
-
 
 async def fetch_subtitle_text(sub_url):
     if not sub_url:
@@ -54,33 +99,6 @@ async def fetch_subtitle_text(sub_url):
     except Exception:
         return ""
 
-
-async def analyze_video_llm(task_id: str, prompt: str, summary: dict):
-    try:
-        logging.info(f"🧠 Sending task {task_id} to model...")
-        completion = client.chat.completions.create(
-            model="deepseek/deepseek-r1-0528:free",
-            extra_headers={
-                "HTTP-Referer": "http://localhost:3000",
-                "X-Title": "PostMortem AI",
-            },
-            messages=[
-                {"role": "system", "content": "You are a helpful AI YouTube strategist."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        generated_text = completion.choices[0].message.content.strip()
-        TASKS[task_id] = {
-            "report": generated_text,
-            "summary": summary,
-            "status": "done"
-        }
-        logging.info(f"✅ Task {task_id} completed.")
-    except Exception as e:
-        logging.error(f"❌ Task {task_id} failed", exc_info=True)
-        TASKS[task_id] = {"error": str(e), "status": "error"}
-
-
 def estimate_seo_score(title: str, tags: list, description: str, duration: int) -> int:
     score = 0
     if 30 <= len(title) <= 70:
@@ -93,6 +111,64 @@ def estimate_seo_score(title: str, tags: list, description: str, duration: int) 
         score += 25
     return min(score, 100)
 
+def get_all_comments(video_id, max_total=1000):
+    try:
+        api_key = os.getenv("YOUTUBE_API_KEY")
+        youtube = build("youtube", "v3", developerKey=api_key)
+        comments = []
+        next_page_token = None
+
+        while len(comments) < max_total:
+            request = youtube.commentThreads().list(
+                part="snippet",
+                videoId=video_id,
+                maxResults=100,
+                pageToken=next_page_token,
+                textFormat="plainText"
+            )
+            response = request.execute()
+            items = response.get("items", [])
+
+            for item in items:
+                text = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
+                comments.append(text)
+
+            next_page_token = response.get("nextPageToken")
+            if not next_page_token:
+                break
+
+        return comments[:max_total]
+    except Exception:
+        logging.exception("Failed to fetch YouTube comments.")
+        return []
+
+async def analyze_video_llm(task_id: str, prompt: str, summary: dict, sentiment_summary):
+    try:
+        def sync_openai_call():
+            completion = client.chat.completions.create(
+                model="deepseek/deepseek-r1-0528:free",
+                extra_headers={
+                    "HTTP-Referer": "http://localhost:3000",
+                    "X-Title": "PostMortem AI",
+                },
+                messages=[
+                    {"role": "system", "content": "You are a helpful AI YouTube strategist."},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return completion
+
+        completion = await run_in_threadpool(sync_openai_call)
+        generated_text = completion.choices[0].message.content.strip()
+        TASKS[task_id] = {
+            "report": generated_text,
+            "summary": summary,
+            "sentiment_summary": sentiment_summary,
+            "status": "done"
+        }
+    except Exception as e:
+        logging.error(f"Task {task_id} failed", exc_info=True)
+        TASKS[task_id] = {"error": str(e), "status": "error"}
 
 @app.post("/analyze")
 async def analyze(request: Request):
@@ -102,86 +178,46 @@ async def analyze(request: Request):
         language = data.get("language", "en")
 
         if not url:
-            return JSONResponse(status_code=400, content={"detail": "🎯 You must provide a URL."})
+            return JSONResponse(status_code=400, content={"detail": "You must provide a URL."})
 
         cache_key = get_cache_key(url, language)
         now = time.time()
         if cache_key in CACHE and now - CACHE[cache_key]["timestamp"] < CACHE_EXPIRY:
             return JSONResponse(content=CACHE[cache_key]["result"])
 
-        match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", url)
+        match = re.search(r"(?:v=|/)([0-9A-Za-z_-]{11})", url)
         video_id = match.group(1) if match else None
         if not video_id:
             return JSONResponse(status_code=400, content={"detail": "Invalid YouTube URL"})
 
-        use_fallback = False
-
         try:
             video_stats = await get_video_stats(video_id)
             channel_id = video_stats.get("channel_id")
-            if not video_stats or not channel_id:
-                raise Exception("Incomplete video stats")
-
             channel_stats = await get_channel_stats(channel_id)
+        except Exception:
+            return JSONResponse(status_code=500, content={"detail": "Failed to fetch video/channel stats"})
 
-            title = video_stats.get("title")
-            description = video_stats.get("description")
-            tags = video_stats.get("tags", [])
-            duration = video_stats.get("duration", 0)
-            upload_date = video_stats.get("upload_date", "Unknown")
-            category = video_stats.get("category", "Unknown")
-            channel = video_stats.get("channel_title", "Unknown")
-            thumbnail = video_stats.get("thumbnail", "")
-            channel_url = f"https://www.youtube.com/channel/{channel_id}"
-            view_count = video_stats.get("views", 0)
-            like_count = video_stats.get("likes", 0)
-            comment_count = video_stats.get("comments", 0)
-            subscriber_count = channel_stats.get("subscriber_count", 0)
-            impressions = video_stats.get("impressions", view_count * 3)
+        title = video_stats.get("title")
+        description = video_stats.get("description")
+        tags = video_stats.get("tags", [])
+        duration = video_stats.get("duration", 0)
+        upload_date = video_stats.get("upload_date", "Unknown")
+        category = video_stats.get("category", "Unknown")
+        channel = video_stats.get("channel_title", "Unknown")
+        thumbnail = video_stats.get("thumbnail", "")
+        channel_url = f"https://www.youtube.com/channel/{channel_id}"
+        view_count = video_stats.get("views", 0)
+        like_count = video_stats.get("likes", 0)
+        comment_count = video_stats.get("comments", 0)
+        subscriber_count = channel_stats.get("subscriber_count", 0)
+        impressions = video_stats.get("impressions", view_count * 3)
 
-        except Exception as e:
-            logging.warning(f"⚠️ YouTube API failed. Falling back to yt_dlp. Reason: {e}")
-            use_fallback = True
-
-        if use_fallback:
-            ydl_opts = {
-                "quiet": True,
-                "skip_download": True,
-                "nocheckcertificate": True,
-                "noplaylist": True,
-                "writesubtitles": True,
-                "writeautomaticsub": True,
-                "subtitlesformat": "vtt",
-                "subtitleslangs": [language],
-            }
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=False)
-
-            video_id = info.get("id", "")
-            channel_id = info.get("channel_id", "")
-            title = info.get("title", "")
-            description = info.get("description", "")
-            tags = info.get("tags", [])
-            duration = int(info.get("duration") or 0)
-            upload_date = info.get("upload_date", "Unknown")
-            category = info.get("categories", ["Unknown"])[0]
-            channel = info.get("uploader", "Unknown")
-            thumbnail = info.get("thumbnail", "")
-            channel_url = f"https://www.youtube.com/channel/{channel_id}" if channel_id else "Unavailable"
-            view_count = int(info.get("view_count") or 0)
-            like_count = int(info.get("like_count") or 0)
-            comment_count = int(info.get("comment_count") or 0)
-            subscriber_count = int(info.get("channel_follower_count") or 0)
-            impressions = view_count * 3
-
-        # 📊 Metrics
         ctr = round((view_count / impressions) * 100, 2) if impressions > 0 else 0
         avg_view_duration = round(duration * 0.4, 2) if duration > 0 else 0
         seo_score = estimate_seo_score(title, tags, description, duration)
         interaction_rate = round(((like_count + comment_count) / view_count) * 100, 2) if view_count > 0 else 0
         retention_rate = round((avg_view_duration / duration) * 100, 2) if duration > 0 else 0
 
-        # 📄 Transcript
         ydl_opts_subs = {
             "quiet": True,
             "skip_download": True,
@@ -192,7 +228,6 @@ async def analyze(request: Request):
             "subtitlesformat": "vtt",
             "subtitleslangs": [language],
         }
-
         with yt_dlp.YoutubeDL(ydl_opts_subs) as ydl:
             info = ydl.extract_info(url, download=False)
 
@@ -204,6 +239,9 @@ async def analyze(request: Request):
 
         transcript_excerpt = (await fetch_subtitle_text(subtitles_url)).strip()[:1000] or "No subtitles available."
         lang_name = {"en": "English", "hi": "Hindi", "bn": "Bengali"}.get(language, "English")
+
+        comments = await run_in_threadpool(get_all_comments, video_id, 1000)
+        sentiment_summary = compute_sentiment_percentages(comments) if comments else {"positive_percent": 0, "negative_percent": 0}
 
         prompt = f"""
 You're a senior YouTube strategist. Analyze the video using metadata, performance, transcript, and channel context.
@@ -254,21 +292,20 @@ Make your response in {lang_name}. Include 3 performance issues, 3 quick fixes, 
             "avg_view_duration": avg_view_duration,
             "interaction_rate": interaction_rate,
             "retention_rate": retention_rate,
-            "transcript_excerpt": transcript_excerpt
+            "transcript_excerpt": transcript_excerpt,
+            "sentiment_summary": sentiment_summary
         }
 
         task_id = f"task-{int(time.time() * 1000)}"
         TASKS[task_id] = {"status": "processing"}
-        asyncio.create_task(analyze_video_llm(task_id, prompt, summary))
+        asyncio.create_task(analyze_video_llm(task_id, prompt, summary, sentiment_summary))
 
         CACHE[cache_key] = {"result": {"task_id": task_id, "status": "processing"}, "timestamp": now}
-
         return {"task_id": task_id, "status": "processing"}
 
     except Exception as e:
-        logging.error("❌ Analyze error", exc_info=True)
+        logging.error("Analyze error", exc_info=True)
         return JSONResponse(status_code=500, content={"detail": f"Server error: {str(e)}"})
-
 
 @app.get("/result/{task_id}")
 async def get_result(task_id: str):
@@ -276,3 +313,12 @@ async def get_result(task_id: str):
     if not result:
         return {"status": "not_found"}
     return result
+
+@app.post("/analyze-sentiment")
+async def analyze_sentiment_route(comments: List[str] = Body(...)):
+    try:
+        sentiment_summary = compute_sentiment_percentages(comments)
+        return sentiment_summary
+    except Exception as e:
+        logging.error("Sentiment analysis error", exc_info=True)
+        return JSONResponse(status_code=500, content={"detail": f"Sentiment error: {str(e)}"})
