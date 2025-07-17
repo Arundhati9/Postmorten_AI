@@ -1,9 +1,9 @@
 import React from "react";
 import "./HistoryPanel.css";
 
-function HistoryPanel({ history, onSelect, onDelete }) {
+function HistoryPanel({ history, onSelect, onDelete, isMobile, visible }) {
   return (
-    <aside className="history-panel">
+    <aside className={`history-panel ${isMobile ? (visible ? "show" : "hide") : ""}`}>
       <h3>Previous Analyses</h3>
       {history.length === 0 && <p className="empty-history">No history yet.</p>}
       {history.map((entry, index) => (
