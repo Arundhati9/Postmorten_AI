@@ -103,7 +103,8 @@ function App() {
           response.data.report,
           response.data.summary,
           url,
-          response.data.sentiment_summary
+          response.data.sentiment_summary,
+          response.data.video_title
         );
       } else {
         throw new Error("Unexpected backend response");
@@ -139,7 +140,8 @@ function App() {
           res.data.summary,
           analyzedUrl,
           res.data.sentiment_summary ||
-            (res.data.summary ? res.data.summary.sentiment_summary : null)
+            (res.data.summary ? res.data.summary.sentiment_summary : null),
+          res.data.video_title // ✅ Pass title here
         );
       } else if (res.data.status === "error" || res.data.error) {
         toast.error("❌ AI service error: " + (res.data.error || "Unknown error"));
@@ -160,7 +162,13 @@ function App() {
     }
   };
 
-  const displayReport = (generatedReport, videoSummary, urlToSave, sentiment_summary) => {
+  const displayReport = (
+    generatedReport,
+    videoSummary,
+    urlToSave,
+    sentiment_summary,
+    videoTitle
+  ) => {
     const id = extractYouTubeVideoId(urlToSave);
     setVideoId(id);
     setReport(generatedReport);
@@ -174,7 +182,10 @@ function App() {
         ((((videoSummary?.likes || 0) + (videoSummary?.comments || 0)) / (videoSummary?.views || 1)) * 100).toFixed(2)
       ),
     });
-    saveReport(urlToSave, generatedReport);
+
+    const title = videoTitle || videoSummary?.title || "Untitled Video";
+    saveReport(urlToSave, generatedReport, title);
+
     setLoading(false);
     setStepMessage("");
     loadingBar.current?.complete();
@@ -185,8 +196,8 @@ function App() {
     }, 300);
   };
 
-  const saveReport = (url, report) => {
-    const newEntry = { url, report, date: new Date().toLocaleString() };
+  const saveReport = (url, report, title = "Untitled Video") => {
+    const newEntry = { url, report, title, date: new Date().toLocaleString() };
     const updatedHistory = [newEntry, ...history].slice(0, 10);
     setHistory(updatedHistory);
     localStorage.setItem("analysisHistory", JSON.stringify(updatedHistory));
@@ -271,21 +282,6 @@ function App() {
                 }}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    navigator.clipboard.readText().then(text => {
-                      if (text.trim()) {
-                        setUrl(text);
-                        toast.success("✅ Link pasted from clipboard!");
-                      } else {
-                        toast.warn("📋 Clipboard is empty.");
-                      }
-                    }).catch(() => {
-                      toast.error("❌ Unable to read clipboard.");
-                    });
-                  }
-                }}
                 aria-label="Paste from clipboard"
               >
                 📋

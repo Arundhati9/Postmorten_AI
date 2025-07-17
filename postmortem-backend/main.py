@@ -1,3 +1,4 @@
+# (Unchanged imports and setup)
 import os
 import re
 import time
@@ -164,6 +165,7 @@ async def analyze_video_llm(task_id: str, prompt: str, summary: dict, sentiment_
             "report": generated_text,
             "summary": summary,
             "sentiment_summary": sentiment_summary,
+            "title": summary["title"],  # ✅ Added this line
             "status": "done"
         }
     except Exception as e:
@@ -312,7 +314,15 @@ async def get_result(task_id: str):
     result = TASKS.get(task_id)
     if not result:
         return {"status": "not_found"}
-    return result
+    
+    return {
+        "status": result.get("status"),
+        "report": result.get("report"),
+        "summary": result.get("summary"),
+        "sentiment_summary": result.get("sentiment_summary"),
+        "video_title": result.get("title")  # ✅ Key line to send to frontend
+    }
+
 
 @app.post("/analyze-sentiment")
 async def analyze_sentiment_route(comments: List[str] = Body(...)):

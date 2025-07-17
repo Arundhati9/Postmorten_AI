@@ -37,7 +37,7 @@ const RadialGauge = ({ label, value, color }) => {
 
   return (
     <div className="chart-box">
-      <h4>{label}</h4>
+      <h4 className="chart-label">{label}</h4>
       <ReactECharts option={option} style={{ height: 160 }} />
     </div>
   );
@@ -46,7 +46,7 @@ const RadialGauge = ({ label, value, color }) => {
 const VideoCharts = ({ ctr, avgViewDuration, seoScore }) => {
   return (
     <div className="video-charts">
-      <h3>📊 Key Performance Metrics</h3>
+      <h3 className="section-title">📊 Key Performance Metrics</h3>
       <div className="video-charts-grid">
         <RadialGauge label="CTR (%)" value={ctr} color="#00c6ff" />
         <RadialGauge label="Avg View Duration (s)" value={avgViewDuration} color="#ff4f81" />
