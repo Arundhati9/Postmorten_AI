@@ -1,39 +1,53 @@
 import React from "react";
 import "./FormattedReport.css";
 
+// Utility to strip Markdown-like symbols
+function stripMarkdown(line) {
+  return line.replace(/^[*_]+|[*_]+$/g, "").trim();
+}
+
 const FormattedReport = ({ rawReport }) => {
   if (!rawReport) return null;
 
+  // Cleaned up lines: remove empty, dash-only, or invalid lines
   const lines = rawReport
     .split("\n")
     .map((line) => line.trim())
-    .filter((line) => line !== "");
+    .filter(
+      (line) =>
+        line &&
+        line !== "-" &&
+        line !== "*" &&
+        line !== "•" &&
+        line.replace(/[-*•]/g, "").trim().length > 0
+    );
 
   return (
-    <section className="ai-report-content" aria-label="AI Generated Report">
-      {lines.map((line, index) => {
-        // Main headings (## or ###)
+    <section className="ai-report-content" aria-label="AI Out-of-Box Report">
+      {lines.map((line, idx) => {
+        // Headings like ## or ###
         if (/^#{2,3}\s*/.test(line)) {
           return (
-            <h2 className="report-section-heading" key={index}>
-              {line.replace(/^#+\s*/, "")}
+            <h2 className="report-section-heading" key={idx}>
+              {stripMarkdown(line.replace(/^#{2,3}\s*/, ""))}
             </h2>
           );
         }
 
-        // Numbered or bullet subheadings (e.g., "1. Something" or "- Something")
-        if (/^(\d+\.\s+|[-*•]\s+)/.test(line)) {
+        // Bullet points with real content
+        const bulletMatch = line.match(/^(\d+\.\s+|[-*•]\s+)(.+)$/);
+        if (bulletMatch && bulletMatch[2].trim().length > 1) {
           return (
-            <h4 className="report-bullet-title" key={index}>
-              {line}
+            <h4 className="report-bullet-title" key={idx}>
+              {stripMarkdown(bulletMatch[2])}
             </h4>
           );
         }
 
-        // Paragraph text
+        // Regular paragraph
         return (
-          <p className="report-body-text" key={index}>
-            {line}
+          <p className="report-body-text" key={idx}>
+            {stripMarkdown(line)}
           </p>
         );
       })}

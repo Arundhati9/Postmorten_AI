@@ -1,4 +1,3 @@
-# (Unchanged imports and setup)
 import os
 import re
 import time
@@ -10,7 +9,7 @@ import yt_dlp
 import httpx
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, Body
+from fastapi import FastAPI, Request, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from openai import OpenAI
@@ -45,8 +44,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-CACHE = {}
-TASKS = {}
+CACHE: Dict[str, Dict[str, Any]] = {}
+TASKS: Dict[str, Dict[str, Any]] = {}
 CACHE_EXPIRY = 3600
 
 def clean_text(text: str) -> str:
@@ -54,6 +53,16 @@ def clean_text(text: str) -> str:
     text = re.sub(r"@\w+", "", text)
     text = re.sub(r"#\w+", "", text)
     return text.strip()
+
+def is_relevant_comment(comment: str) -> bool:
+    """Filter out irrelevant comments like ads, promotions, spam."""
+    comment = comment.lower()
+    blacklist = [
+        "buy now", "subscribe", "follow me", "click here", "giveaway", "visit my", 
+        "check my", "tickets", "link in bio", "promo", "discount", "book now", 
+        "join us", "sale", "register", "watch my", "watch full", "sign up"
+    ]
+    return not any(word in comment for word in blacklist)
 
 def analyze_sentiment(comment: str) -> str:
     comment = clean_text(comment)
@@ -83,21 +92,23 @@ def compute_sentiment_percentages(comments: List[str]) -> Dict[str, float]:
         "negative_percent": round((neg / total) * 100, 2)
     }
 
-def get_cache_key(url, language):
+def get_cache_key(url: str, language: str) -> str:
     return f"{url}:{language}"
 
-async def fetch_subtitle_text(sub_url):
+async def fetch_subtitle_text(sub_url: str) -> str:
     if not sub_url:
         return ""
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(sub_url)
+            response.raise_for_status()
             lines = response.text.splitlines()
             return " ".join([
                 line.strip() for line in lines
                 if line.strip() and not line.startswith("WEBVTT") and "-->" not in line
             ])
-    except Exception:
+    except Exception as e:
+        logging.exception("Failed to fetch subtitles")
         return ""
 
 def estimate_seo_score(title: str, tags: list, description: str, duration: int) -> int:
@@ -112,7 +123,7 @@ def estimate_seo_score(title: str, tags: list, description: str, duration: int) 
         score += 25
     return min(score, 100)
 
-def get_all_comments(video_id, max_total=1000):
+def get_all_comments(video_id: str, max_total: int = 1000) -> List[str]:
     try:
         api_key = os.getenv("YOUTUBE_API_KEY")
         youtube = build("youtube", "v3", developerKey=api_key)
@@ -143,7 +154,7 @@ def get_all_comments(video_id, max_total=1000):
         logging.exception("Failed to fetch YouTube comments.")
         return []
 
-async def analyze_video_llm(task_id: str, prompt: str, summary: dict, sentiment_summary):
+async def analyze_video_llm(task_id: str, prompt: str, summary: dict, sentiment_summary: dict) -> None:
     try:
         def sync_openai_call():
             completion = client.chat.completions.create(
@@ -165,7 +176,7 @@ async def analyze_video_llm(task_id: str, prompt: str, summary: dict, sentiment_
             "report": generated_text,
             "summary": summary,
             "sentiment_summary": sentiment_summary,
-            "title": summary["title"],  # ✅ Added this line
+            "title": summary["title"],
             "status": "done"
         }
     except Exception as e:
@@ -176,8 +187,8 @@ async def analyze_video_llm(task_id: str, prompt: str, summary: dict, sentiment_
 async def analyze(request: Request):
     try:
         data = await request.json()
-        url = data.get("url")
-        language = data.get("language", "en")
+        url: Optional[str] = data.get("url")
+        language: str = data.get("language", "en")
 
         if not url:
             return JSONResponse(status_code=400, content={"detail": "You must provide a URL."})
@@ -197,17 +208,18 @@ async def analyze(request: Request):
             channel_id = video_stats.get("channel_id")
             channel_stats = await get_channel_stats(channel_id)
         except Exception:
+            logging.exception("Failed to fetch video or channel stats")
             return JSONResponse(status_code=500, content={"detail": "Failed to fetch video/channel stats"})
 
-        title = video_stats.get("title")
-        description = video_stats.get("description")
+        title = video_stats.get("title", "")
+        description = video_stats.get("description", "")
         tags = video_stats.get("tags", [])
         duration = video_stats.get("duration", 0)
         upload_date = video_stats.get("upload_date", "Unknown")
         category = video_stats.get("category", "Unknown")
         channel = video_stats.get("channel_title", "Unknown")
         thumbnail = video_stats.get("thumbnail", "")
-        channel_url = f"https://www.youtube.com/channel/{channel_id}"
+        channel_url = f"https://www.youtube.com/channel/{channel_id or ''}"
         view_count = video_stats.get("views", 0)
         like_count = video_stats.get("likes", 0)
         comment_count = video_stats.get("comments", 0)
@@ -230,23 +242,56 @@ async def analyze(request: Request):
             "subtitlesformat": "vtt",
             "subtitleslangs": [language],
         }
+
+        subtitles_url = ""
         with yt_dlp.YoutubeDL(ydl_opts_subs) as ydl:
             info = ydl.extract_info(url, download=False)
 
-        subtitles_url = ""
+        # Check for available subtitles & fetch url for text
         if "subtitles" in info and language in info["subtitles"]:
-            subtitles_url = info["subtitles"][language][0].get("url")
+            subtitles_url = info["subtitles"][language][0].get("url", "")
         elif "automatic_captions" in info and language in info["automatic_captions"]:
-            subtitles_url = info["automatic_captions"][language][0].get("url")
+            subtitles_url = info["automatic_captions"][language][0].get("url", "")
 
         transcript_excerpt = (await fetch_subtitle_text(subtitles_url)).strip()[:1000] or "No subtitles available."
         lang_name = {"en": "English", "hi": "Hindi", "bn": "Bengali"}.get(language, "English")
 
         comments = await run_in_threadpool(get_all_comments, video_id, 1000)
-        sentiment_summary = compute_sentiment_percentages(comments) if comments else {"positive_percent": 0, "negative_percent": 0}
+        filtered_comments = [c for c in comments if is_relevant_comment(c)]
+        sentiment_summary = compute_sentiment_percentages(filtered_comments) if filtered_comments else {"positive_percent": 0, "negative_percent": 0}
 
         prompt = f"""
-You're a senior YouTube strategist. Analyze the video using metadata, performance, transcript, and channel context.
+
+You are a no-BS YouTube strategist and growth consultant. A creator has uploaded a video for review. It might be a hit. It might be a flop.
+
+Your job: break down performance with ruthless honesty using viewer signals (CTR, retention, engagement, comments), and then:
+
+If the video underperformed:
+Diagnose exact reasons: Was the intro too slow? Did the pacing dip? Was the hook weak? Was the thumbnail misleading? Was the script emotionally flat?
+
+Give hyper-actionable fixes: Rewrite the title, change hook structure, suggest better pacing/editing/script rewrites, reframe the concept if needed.
+
+If the video performed well:
+Reverse-engineer what made it work: Strong hook? Tight editing? Story-driven narrative? Resonant emotion? Unique POV? Visual polish?
+
+Suggest how to scale this success: Series potential? Reuse structure in other topics? Tighten production workflow? Repeatable hook format?
+
+Always be:
+
+Blunt but tactical — no sugarcoating
+
+Specific — no vague clichés like “just improve pacing” or “add emotion”
+
+Data-driven — retention dips? CTR low? Hook drop-off? Match every insight to a metric
+
+Provide 3 structured sections:
+Performance Analysis: Use retention, CTR, avg. view duration, likes/comments ratio. Highlight any retention cliff timestamps.
+
+Transcript-Based Thematic Evaluation: Evaluate tone/emotion. Do keywords/themes align with title, description, and tags? Call out mismatches.
+
+Actionable Recommendations: Specific title rewrites, intro fixes, pacing edits, visual tweaks, or full reframes. All advice must be tactical and testable.
+
+❌ Avoid generic fluff. Never suggest actions like “ask for likes or subs.”
 
 # Video
 - Title: {title}
@@ -320,14 +365,14 @@ async def get_result(task_id: str):
         "report": result.get("report"),
         "summary": result.get("summary"),
         "sentiment_summary": result.get("sentiment_summary"),
-        "video_title": result.get("title")  # ✅ Key line to send to frontend
+        "video_title": result.get("title")
     }
-
 
 @app.post("/analyze-sentiment")
 async def analyze_sentiment_route(comments: List[str] = Body(...)):
     try:
-        sentiment_summary = compute_sentiment_percentages(comments)
+        filtered_comments = [c for c in comments if is_relevant_comment(c)]
+        sentiment_summary = compute_sentiment_percentages(filtered_comments)
         return sentiment_summary
     except Exception as e:
         logging.error("Sentiment analysis error", exc_info=True)
