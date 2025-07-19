@@ -1,0 +1,19 @@
+.theme {
+  background: none;
+  border: 1px solid #ccc;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+body.dark .theme{
+  border-color: #555;
+  color: #fff;
+}
+
+body.light .theme {
+  border-color: #000;
+  color: #000;
+}

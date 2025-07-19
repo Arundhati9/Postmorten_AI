@@ -21,6 +21,7 @@ import VideoPreview from "./components/VideoPreview/VideoPreview";
 import StatsOverview from "./components/StatsOverview/StatsOverview";
 import VideoCharts from "./components/VideoCharts/VideoCharts";
 import SentimentSummary from "./components/SentimentSummary/SentimentSummary";
+import Theme from "./components/Theme/Theme";
 
 import "./App.css";
 
@@ -242,14 +243,16 @@ function App() {
     <div className="App">
       <LoadingBar color="#00c6ff" height={3} ref={loadingBar} />
       <ToastContainer position="top-center" autoClose={3000} />
-      <Header darkMode={darkMode} setDarkMode={setDarkMode} />
-
+      <Header 
+      darkMode={darkMode} 
+      setDarkMode={setDarkMode} 
+      history={history}
+      onSelect={loadReport}
+      onDelete={deleteReport}
+      />
+      {/* <Theme darkMode={darkMode} setDarkMode={setDarkMode} /> */}
       <div className="main-section">
-        {isMobile && (
-          <button className="toggle-history-button" onClick={() => setShowHistory(!showHistory)}>
-            ☰ 
-          </button>
-        )}
+      
 
         <HistoryPanel
           history={history}
