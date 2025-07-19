@@ -133,60 +133,6 @@ button:disabled {
   box-shadow: none;
 }
 
-/* ===== Stats Overview ===== */
-/* .stat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.75rem;
-}
-
-.stat-box {
-  padding: 1.6rem 1.8rem;
-  border-radius: 22px;
-  background: radial-gradient(ellipse at top left, rgba(0, 198, 255, 0.07), rgba(255, 255, 255, 0.03));
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: var(--shadow);
-  backdrop-filter: var(--glass-blur);
-  transition: all 0.35s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-box:hover {
-  transform: translateY(-6px) scale(1.015);
-  box-shadow: 0 12px 30px rgba(0, 198, 255, 0.25);
-}
-
-.stat-header {
-  font-size: 1.05rem;
-  font-weight: 600;
-  font-family: 'Poppins', sans-serif;
-  margin-bottom: 0.6rem;
-  color: var(--text-color);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.stat-box .value {
-  font-size: 2rem;
-  font-weight: bold;
-  font-family: 'Poppins', sans-serif;
-  color: var(--text-color);
-}
-
-.icon {
-  font-size: 1.4rem;
-  color: var(--accent);
-  transition: transform 0.3s ease, color 0.3s ease;
-}
-
-.stat-box:hover .icon {
-  transform: scale(1.2);
-  color: var(--hover-blue);
-  text-shadow: 0 0 10px #00eaffaa;
-} */
-
 
 /* ===== Animation ===== */
 @keyframes fadeInUp {
@@ -232,5 +178,8 @@ button:disabled {
   button {
     width: 100%;
     font-size: 1rem;
+  }
+  .toggle-history-button{
+    width: 50px;
   }
 }

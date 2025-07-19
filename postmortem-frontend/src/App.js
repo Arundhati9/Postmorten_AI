@@ -244,7 +244,7 @@ function App() {
       <div className="main-section">
         {isMobile && (
           <button className="toggle-history-button" onClick={() => setShowHistory(!showHistory)}>
-            ☰ History
+            ☰ 
           </button>
         )}
 
