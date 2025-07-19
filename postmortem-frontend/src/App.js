@@ -35,6 +35,7 @@ const extractYouTubeVideoId = (url) => {
 
 function App() {
   const [url, setUrl] = useState("");
+  const [reportType, setReportType] = useState("quick");
   const [report, setReport] = useState("");
   const [summary, setSummary] = useState(null);
   const [sentiment, setSentiment] = useState(null);
@@ -95,7 +96,10 @@ function App() {
       await new Promise((res) => setTimeout(res, 500));
       setStepMessage("🤖 Generating AI report...");
 
-      const response = await axios.post(`${API_BASE_URL}/analyze`, { url });
+      const response = await axios.post(`${API_BASE_URL}/analyze`, {
+        url,
+        report_type: reportType,
+      });
 
       if (response.data.task_id) {
         pollForResult(response.data.task_id, url);
@@ -140,9 +144,8 @@ function App() {
           res.data.report,
           res.data.summary,
           analyzedUrl,
-          res.data.sentiment_summary ||
-            (res.data.summary ? res.data.summary.sentiment_summary : null),
-          res.data.video_title // ✅ Pass title here
+          res.data.sentiment_summary,
+          res.data.video_title
         );
       } else if (res.data.status === "error" || res.data.error) {
         toast.error("❌ AI service error: " + (res.data.error || "Unknown error"));
@@ -281,13 +284,19 @@ function App() {
                     toast.error("❌ Unable to read clipboard.");
                   }
                 }}
-                role="button"
-                tabIndex={0}
-                aria-label="Paste from clipboard"
               >
                 📋
               </span>
             </div>
+            <select
+              value={reportType}
+              onChange={(e) => setReportType(e.target.value)}
+              disabled={loading}
+              style={{ marginLeft: "10px", padding: "5px" }}
+            >
+              <option value="quick">Quick Report</option>
+              <option value="deep">Deep Report</option>
+            </select>
             <button onClick={handleAnalyze} disabled={loading}>
               {loading ? "Analyzing..." : "Analyze"}
             </button>
@@ -308,21 +317,6 @@ function App() {
                 />
               )}
               <SentimentSummary sentiment={sentiment} />
-
-              {/* {sentiment && (
-                <div className="sentiment-summary">
-                  <h3>🧠 Comment Sentiment Summary</h3>
-                  <ul>
-                    <li>
-                      <strong>Positive:</strong> {sentiment.positive_percent ?? 0}%
-                    </li>
-                    <li>
-                      <strong>Negative:</strong> {sentiment.negative_percent ?? 0}%
-                    </li>
-                  </ul>
-                </div>
-              )} */}
-
               <FormattedReport rawReport={report} />
               <button onClick={exportPDF}>📄 Export as PDF</button>
             </div>
