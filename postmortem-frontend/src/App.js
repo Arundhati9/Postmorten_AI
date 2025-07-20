@@ -21,7 +21,7 @@ import VideoPreview from "./components/VideoPreview/VideoPreview";
 import StatsOverview from "./components/StatsOverview/StatsOverview";
 import VideoCharts from "./components/VideoCharts/VideoCharts";
 import SentimentSummary from "./components/SentimentSummary/SentimentSummary";
-import Theme from "./components/Theme/Theme";
+// import Theme from "./components/Theme/Theme";
 
 import "./App.css";
 
@@ -54,11 +54,22 @@ function App() {
 
   const loadingBar = useRef(null);
   const pollingTimeout = useRef(null);
+  const MAX_POLLS = 25; // You can adjust if you want
 
+  // --- Clean up any polling timeout on component unmount ONLY ---
+  useEffect(() => {
+    return () => {
+      if (pollingTimeout.current) {
+        clearTimeout(pollingTimeout.current);
+        pollingTimeout.current = null;
+      }
+    };
+  }, []);
+
+  // --- Just theme effect, don't clear pollingTimeout here! ---
   useEffect(() => {
     document.body.classList.toggle("dark", darkMode);
     document.body.classList.toggle("light", !darkMode);
-    return () => clearTimeout(pollingTimeout.current);
   }, [darkMode]);
 
   useEffect(() => {
@@ -77,7 +88,75 @@ function App() {
     return regex.test(url);
   };
 
+  // --- Polling logic with robust exit/cleanup ---
+  const pollForResult = async (taskId, analyzedUrl, pollCount = 0) => {
+    setStepMessage("⏳ Waiting for AI analysis...");
+
+    if (pollCount > MAX_POLLS) {
+      toast.error("❌ AI analysis timeout, please try again later.");
+      setReport("❌ Analysis timed out.");
+      setLoading(false);
+      setStepMessage("");
+      loadingBar.current?.complete();
+      return;
+    }
+
+    try {
+      const res = await axios.get(`${API_BASE_URL}/result/${taskId}`);
+
+      if (res.data.status === "processing") {
+        pollingTimeout.current = setTimeout(() => {
+          pollForResult(taskId, analyzedUrl, pollCount + 1);
+        }, 1500 + Math.min(pollCount, 4) * 500);
+      } else if (res.data.status === "done" && res.data.report) {
+        if (pollingTimeout.current) {
+          clearTimeout(pollingTimeout.current);
+          pollingTimeout.current = null;
+        }
+        displayReport(
+          res.data.report,
+          res.data.summary,
+          analyzedUrl,
+          res.data.sentiment_summary,
+          res.data.video_title
+        );
+      } else if (res.data.status === "error" || res.data.error) {
+        if (pollingTimeout.current) {
+          clearTimeout(pollingTimeout.current);
+          pollingTimeout.current = null;
+        }
+        toast.error("❌ AI service error: " + (res.data.error || "Unknown error"));
+        setReport("❌ Error analyzing video.");
+        setLoading(false);
+        setStepMessage("");
+        loadingBar.current?.complete();
+      } else {
+        if (pollingTimeout.current) {
+          clearTimeout(pollingTimeout.current);
+          pollingTimeout.current = null;
+        }
+        throw new Error("Unknown backend response format.");
+      }
+    } catch (err) {
+      if (pollingTimeout.current) {
+        clearTimeout(pollingTimeout.current);
+        pollingTimeout.current = null;
+      }
+      console.error("Polling error:", err);
+      toast.error("❌ AI analysis failed or took too long.");
+      setReport("❌ Error analyzing video.");
+      setLoading(false);
+      setStepMessage("");
+      loadingBar.current?.complete();
+    }
+  };
+
   const handleAnalyze = async () => {
+    // --- Always clear pending poll before a new one ---
+    if (pollingTimeout.current) {
+      clearTimeout(pollingTimeout.current);
+      pollingTimeout.current = null;
+    }
     if (!url.trim()) return;
     if (!isValidYouTubeUrl(url)) {
       toast.error("❌ Please enter a valid YouTube video URL.");
@@ -122,48 +201,6 @@ function App() {
       setLoading(false);
       loadingBar.current?.complete();
       setStepMessage("");
-    }
-  };
-
-  const pollForResult = async (taskId, analyzedUrl, pollCount = 0) => {
-    setStepMessage("⏳ Waiting for AI analysis...");
-
-    try {
-      await new Promise((res) =>
-        setTimeout(res, 1500 + Math.min(pollCount, 4) * 500)
-      );
-
-      const res = await axios.get(`${API_BASE_URL}/result/${taskId}`);
-
-      if (res.data.status === "processing") {
-        if (pollCount > 25) throw new Error("Analysis timed out. Please retry.");
-        pollingTimeout.current = setTimeout(() => {
-          pollForResult(taskId, analyzedUrl, pollCount + 1);
-        }, 0);
-      } else if (res.data.status === "done" && res.data.report) {
-        displayReport(
-          res.data.report,
-          res.data.summary,
-          analyzedUrl,
-          res.data.sentiment_summary,
-          res.data.video_title
-        );
-      } else if (res.data.status === "error" || res.data.error) {
-        toast.error("❌ AI service error: " + (res.data.error || "Unknown error"));
-        setReport("❌ Error analyzing video.");
-        setLoading(false);
-        setStepMessage("");
-        loadingBar.current?.complete();
-      } else {
-        throw new Error("Unknown backend response format.");
-      }
-    } catch (err) {
-      console.error("Polling error:", err);
-      toast.error("❌ AI analysis failed or took too long.");
-      setReport("❌ Error analyzing video.");
-      setLoading(false);
-      setStepMessage("");
-      loadingBar.current?.complete();
     }
   };
 
@@ -244,16 +281,14 @@ function App() {
       <LoadingBar color="#00c6ff" height={3} ref={loadingBar} />
       <ToastContainer position="top-center" autoClose={3000} />
       <Header 
-      darkMode={darkMode} 
-      setDarkMode={setDarkMode} 
-      history={history}
-      onSelect={loadReport}
-      onDelete={deleteReport}
+        darkMode={darkMode} 
+        setDarkMode={setDarkMode}
+        history={history}
+        onSelect={loadReport}
+        onDelete={deleteReport}
       />
       {/* <Theme darkMode={darkMode} setDarkMode={setDarkMode} /> */}
       <div className="main-section">
-      
-
         <HistoryPanel
           history={history}
           onSelect={loadReport}

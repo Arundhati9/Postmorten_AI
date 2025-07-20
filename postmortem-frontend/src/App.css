@@ -91,6 +91,25 @@ main {
   outline: none;
 }
 
+/* ===== Select styling to match input/button ===== */
+select {
+  padding: 0.68rem 1rem;
+  font-size: 1rem;
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: var(--text-color);
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  transition: all 0.3s;
+  outline: none;
+  margin-left: 10px;
+}
+select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(0, 198, 255, 0.2);
+}
+
+/* ===== Paste icon ===== */
 .paste-icon {
   position: absolute;
   right: 0.9rem;
@@ -101,9 +120,8 @@ main {
   cursor: pointer;
   transition: all 0.3s ease;
 }
-
 .paste-icon:hover {
-  transform: scale(1.2);
+  transform: translateY(-50%) scale(1.2);
   color: var(--hover-blue);
 }
 
@@ -133,6 +151,24 @@ button:disabled {
   box-shadow: none;
 }
 
+/* Toggle history button */
+.toggle-history-button {
+  display: inline-block;
+  min-width: 50px;
+  padding: 0.75rem 1.2rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 10px;
+  background: var(--gradient-primary);
+  color: #fff;
+  border: none;
+  box-shadow: 0 6px 18px rgba(0, 198, 255, 0.15);
+  transition: all 0.2s;
+  margin-bottom: 1.2rem;
+}
+.toggle-history-button:hover {
+  transform: scale(1.08);
+}
 
 /* ===== Animation ===== */
 @keyframes fadeInUp {
@@ -172,14 +208,21 @@ button:disabled {
   .search-bar-with-icon {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.6rem;
   }
 
   input,
-  button {
+  button,
+  select {
     width: 100%;
     font-size: 1rem;
   }
-  .toggle-history-button{
-    width: 50px;
+
+  .toggle-history-button {
+    width: 100%;
+    min-width: unset;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    padding: 0.7rem 0;
   }
 }

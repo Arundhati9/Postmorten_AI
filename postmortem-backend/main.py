@@ -9,7 +9,7 @@ import yt_dlp
 import httpx
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, Body, HTTPException
+from fastapi import FastAPI, Request, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from openai import OpenAI
@@ -58,8 +58,8 @@ def is_relevant_comment(comment: str) -> bool:
     """Filter out irrelevant comments like ads, promotions, spam."""
     comment = comment.lower()
     blacklist = [
-        "buy now", "subscribe", "follow me", "click here", "giveaway", "visit my", 
-        "check my", "tickets", "link in bio", "promo", "discount", "book now", 
+        "buy now", "subscribe", "follow me", "click here", "giveaway", "visit my",
+        "check my", "tickets", "link in bio", "promo", "discount", "book now",
         "join us", "sale", "register", "watch my", "watch full", "sign up"
     ]
     return not any(word in comment for word in blacklist)
@@ -88,8 +88,8 @@ def compute_sentiment_percentages(comments: List[str]) -> Dict[str, float]:
     if total == 0:
         return {"positive_percent": 0.0, "negative_percent": 0.0}
     return {
-        "positive_percent": round((pos / total) * 100, 2),
-        "negative_percent": round((neg / total) * 100, 2)
+        "positive_percent": float(round((pos / total) * 100, 2)),
+        "negative_percent": float(round((neg / total) * 100, 2))
     }
 
 def get_cache_key(url: str, language: str) -> str:
@@ -176,7 +176,7 @@ async def analyze_video_llm(task_id: str, prompt: str, summary: dict, sentiment_
             "report": generated_text,
             "summary": summary,
             "sentiment_summary": sentiment_summary,
-            "title": summary["title"],
+            "title": summary.get("title", ""),
             "status": "done"
         }
     except Exception as e:
@@ -255,7 +255,6 @@ async def analyze(request: Request):
 
         transcript_excerpt = (await fetch_subtitle_text(subtitles_url)).strip()[:1000] or "No subtitles available."
         lang_name = {"en": "English", "hi": "Hindi", "bn": "Bengali"}.get(language, "English")
-
         comments = await run_in_threadpool(get_all_comments, video_id, 1000)
         filtered_comments = [c for c in comments if is_relevant_comment(c)]
         sentiment_summary = compute_sentiment_percentages(filtered_comments) if filtered_comments else {"positive_percent": 0, "negative_percent": 0}
@@ -357,9 +356,16 @@ Make your response in {lang_name}. Include 3 performance issues, 3 quick fixes, 
 @app.get("/result/{task_id}")
 async def get_result(task_id: str):
     result = TASKS.get(task_id)
+    # Always include all fields; set to None/missing if not present.
     if not result:
-        return {"status": "not_found"}
-    
+        return {
+            "status": "not_found",
+            "report": None,
+            "summary": None,
+            "sentiment_summary": None,
+            "video_title": None
+        }
+
     return {
         "status": result.get("status"),
         "report": result.get("report"),
