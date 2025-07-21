@@ -126,7 +126,7 @@ select:focus {
 }
 
 /* ===== Buttons ===== */
-button {
+.analyse {
   padding: 0.75rem 1.8rem;
   border: none;
   border-radius: 14px;
@@ -140,12 +140,12 @@ button {
   transition: all 0.25s ease-in-out;
 }
 
-button:hover {
+.analyse:hover {
   transform: translateY(-2px) scale(1.04);
   box-shadow: 0 12px 32px rgba(0, 198, 255, 0.35);
 }
 
-button:disabled {
+.analyse:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   box-shadow: none;
@@ -206,15 +206,20 @@ button:disabled {
   }
 
   .search-bar-with-icon {
+     flex-wrap: wrap;  
     flex-direction: column;
     align-items: stretch;
     gap: 0.6rem;
   }
+  .input-wrapper{
+  display: flex;
+  
+  }
 
   input,
-  button,
+  .analyse,
   select {
-    width: 100%;
+    width: 90%;
     font-size: 1rem;
   }
 

@@ -121,13 +121,11 @@ header h1 {
 }
 
 /* Toggle buttons */
-.history-toggle-btn,
-.theme-toggle {
-  width: 42px;
-  height: 42px;
-  background: transparent;
-  border: 1px solid #00d5ff;
-  border-radius: 12px;
+
+.theme-toggle { 
+  /* background: transparent;
+  border: 1px solid #00d5ff; */
+  /* border-radius: 12px; */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -148,16 +146,28 @@ header h1 {
   }
 
   .logo {
-    font-size: 1.3rem;
+     white-space: nowrap;
+    font-size: 1rem;
   }
  .history-toggle-btn{
-  margin-left: 40px;
+  width: 200px;
+  height: 25px;
+  margin-left: 0px;
+  background: transparent;
+  border: 1px solid #00d5ff;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-color);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
  }
-  .history-toggle-btn,
   .theme-toggle {
-    width: 36px;
-    height: 36px;
-    font-size: 1rem;
+    /* width: 6px;
+    height: 6px; */
+    font-size: 0.5rem;
     border-radius: 10px;
   }
 

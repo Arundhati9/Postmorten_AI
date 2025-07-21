@@ -16,7 +16,7 @@
 
 /* ==== Neon Gradient Animated Main Heading ==== */
 .report-section-heading {
-  font-size: 2.3rem;
+  font-size: 1.5rem;
   font-weight: 900;
   letter-spacing: 1.3px;
   font-family: 'Poppins', sans-serif;
@@ -40,7 +40,7 @@
 .report-bullet-title {
   display: flex;
   align-items: center;
-  font-size: 1.17rem;
+  font-size: 1rem;
   font-weight: 650;
   padding-left: 1.3rem;
   margin: 2.2rem 0 1.2rem 0;
@@ -76,7 +76,7 @@
   margin-bottom: 1.7rem;
   box-shadow: 0 4px 28px rgba(0,198,255,0.10), 0 1px 6px #222a4996 inset;
   color: #e8f6ff;
-  font-size: 1.09rem;
+  font-size: 0.8rem;
   transition: background 0.34s cubic-bezier(.7,.05,.2,.99), 
     box-shadow 0.22s cubic-bezier(.24,.85,.65,.37), 
     transform 0.27s cubic-bezier(.55,.12,.99,.6);
@@ -88,14 +88,14 @@
 }
 
 /* ==== Responsive Tweak for Mobile ==== */
-@media (max-width: 600px) {
+/* @media (max-width: 600px) {
   .ai-report-content {
     padding: 1.3rem 0.7rem 1rem 0.3rem;
     border-radius: 17px;
   }
   .report-section-heading { font-size: 1.4rem; }
   .report-bullet-title { font-size: 1rem; }
-}
+} */
 
 /* ==== Animated Accent Bar ==== */
 .ai-report-content::before {
@@ -111,4 +111,52 @@
 @keyframes shiftBar {
   0% { filter: blur(0.7px); }
   100% { filter: blur(3.1px); }
+}
+@media (max-width: 768px) {
+
+.report-section-heading {
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 1.3px;
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 1.7rem;
+  padding-bottom: 0.55rem;
+  color: transparent;
+  background: linear-gradient(90deg, #00e5ff 40%, #537cff 60%, #eff7fa 130%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: hueRotate 7s linear infinite;
+  border-bottom: 3px solid #6ee7ff;
+  text-shadow: 0 6px 32px #03285133, 0 1px 0 #8adfff44;
+}
+.report-bullet-title {
+  display: flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 650;
+  /* padding-left: 1.3rem;
+  margin: 2.2rem 0 1.2rem 0; */
+  color: #ffffff;
+  border-left: 6px solid #00e5ff;
+  border-radius: 8px;
+  letter-spacing: 0.7px;
+  box-shadow: 0 5px 24px #00e5ff12;
+  position: relative;
+  background: rgba(0,229,255,0.09);
+  transition: background 0.34s cubic-bezier(.65,.05,.36,1);
+}
+
+.report-body-text {
+  background: rgba(255,255,255,0.025);
+  padding: 1rem 1rem 1rem 1rem;
+  border-left: 4px solid #aeeeff;
+  border-radius: 18px;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 28px rgba(0,198,255,0.10), 0 1px 6px #222a4996 inset;
+  color: #e8f6ff;
+  font-size: 0.8rem;
+  transition: background 0.34s cubic-bezier(.7,.05,.2,.99), 
+    box-shadow 0.22s cubic-bezier(.24,.85,.65,.37), 
+    transform 0.27s cubic-bezier(.55,.12,.99,.6);
+}
 }

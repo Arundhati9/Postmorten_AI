@@ -335,7 +335,7 @@ function App() {
               <option value="quick">Quick Report</option>
               <option value="deep">Deep Report</option>
             </select>
-            <button onClick={handleAnalyze} disabled={loading}>
+            <button onClick={handleAnalyze} disabled={loading} className="analyse">
               {loading ? "Analyzing..." : "Analyze"}
             </button>
           </div>
@@ -356,7 +356,7 @@ function App() {
               )}
               <SentimentSummary sentiment={sentiment} />
               <FormattedReport rawReport={report} />
-              <button onClick={exportPDF}>📄 Export as PDF</button>
+              <button onClick={exportPDF} className="analyse">📄 Export as PDF</button>
             </div>
           )}
         </main>

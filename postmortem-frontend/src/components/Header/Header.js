@@ -91,9 +91,9 @@ const Header = ({ darkMode, setDarkMode, history, onSelect, onDelete }) => {
           </div>
         )}
 
-        <div className="theme-toggle">
+        {/* <div className="theme-toggle">
           <Theme darkMode={darkMode} setDarkMode={setDarkMode} />
-        </div>
+        </div> */}
       </div>
     </header>
   );
