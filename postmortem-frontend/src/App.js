@@ -1,4 +1,3 @@
-// ...[imports remain unchanged]
 import React, { useState, useEffect, useRef } from "react";
 import "@fontsource/inter/400.css";
 import "@fontsource/inter/600.css";
@@ -20,10 +19,11 @@ import FormattedReport from "./components/FormattedReport/FormattedReport";
 import VideoPreview from "./components/VideoPreview/VideoPreview";
 import StatsOverview from "./components/StatsOverview/StatsOverview";
 import VideoCharts from "./components/VideoCharts/VideoCharts";
-import SentimentSummary from "./components/SentimentSummary/SentimentSummary";
-// import Theme from "./components/Theme/Theme";
+// import SentimentSummary from "./components/SentimentSummary/SentimentSummary";
+
 
 import "./App.css";
+import Footer from "./components/Footer/Footer";
 
 const API_BASE_URL = "http://localhost:8000";
 
@@ -39,7 +39,7 @@ function App() {
   const [reportType, setReportType] = useState("quick");
   const [report, setReport] = useState("");
   const [summary, setSummary] = useState(null);
-  const [sentiment, setSentiment] = useState(null);
+  // const [sentiment, setSentiment] = useState(null);
   const [loading, setLoading] = useState(false);
   const [stepMessage, setStepMessage] = useState("");
   const [history, setHistory] = useState(() => {
@@ -69,7 +69,7 @@ function App() {
   // --- Just theme effect, don't clear pollingTimeout here! ---
   useEffect(() => {
     document.body.classList.toggle("dark", darkMode);
-    document.body.classList.toggle("light", !darkMode);
+    // document.body.classList.toggle("light", !darkMode);
   }, [darkMode]);
 
   useEffect(() => {
@@ -117,7 +117,7 @@ function App() {
           res.data.report,
           res.data.summary,
           analyzedUrl,
-          res.data.sentiment_summary,
+          // res.data.sentiment_summary,
           res.data.video_title
         );
       } else if (res.data.status === "error" || res.data.error) {
@@ -166,7 +166,7 @@ function App() {
     setLoading(true);
     setReport("");
     setSummary(null);
-    setSentiment(null);
+    // setSentiment(null);
     loadingBar.current?.continuousStart();
     setStepMessage("🔍 Extracting video data...");
 
@@ -188,7 +188,7 @@ function App() {
           response.data.report,
           response.data.summary,
           url,
-          response.data.sentiment_summary,
+          // response.data.sentiment_summary,
           response.data.video_title
         );
       } else {
@@ -214,7 +214,7 @@ function App() {
     const id = extractYouTubeVideoId(urlToSave);
     setVideoId(id);
     setReport(generatedReport);
-    setSentiment(sentiment_summary || (videoSummary ? videoSummary.sentiment_summary : null));
+    // setSentiment(sentiment_summary || (videoSummary ? videoSummary.sentiment_summary : null));
     setSummary({
       ...videoSummary,
       retention_rate: Number(
@@ -326,7 +326,7 @@ function App() {
                 📋
               </span>
             </div>
-            <select
+            {/* <select
               value={reportType}
               onChange={(e) => setReportType(e.target.value)}
               disabled={loading}
@@ -334,7 +334,7 @@ function App() {
             >
               <option value="quick">Quick Report</option>
               <option value="deep">Deep Report</option>
-            </select>
+            </select> */}
             <button onClick={handleAnalyze} disabled={loading} className="analyse">
               {loading ? "Analyzing..." : "Analyze"}
             </button>
@@ -354,9 +354,10 @@ function App() {
                   seoScore={summary.seo_score}
                 />
               )}
-              <SentimentSummary sentiment={sentiment} />
+              {/* <SentimentSummary sentiment={sentiment} /> */}
               <FormattedReport rawReport={report} />
               <button onClick={exportPDF} className="analyse">📄 Export as PDF</button>
+              <Footer/>
             </div>
           )}
         </main>

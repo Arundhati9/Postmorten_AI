@@ -30,9 +30,9 @@ client = OpenAI(
     api_key=os.getenv("OPENROUTER_API_KEY"),
 )
 
-tokenizer = AutoTokenizer.from_pretrained("cardiffnlp/twitter-roberta-base-sentiment")
-model = AutoModelForSequenceClassification.from_pretrained("cardiffnlp/twitter-roberta-base-sentiment")
-sentiment_labels = ['negative', 'neutral', 'positive']
+# tokenizer = AutoTokenizer.from_pretrained("cardiffnlp/twitter-roberta-base-sentiment")
+# model = AutoModelForSequenceClassification.from_pretrained("cardiffnlp/twitter-roberta-base-sentiment")
+# sentiment_labels = ['negative', 'neutral', 'positive']
 
 app = FastAPI()
 
@@ -48,49 +48,49 @@ CACHE: Dict[str, Dict[str, Any]] = {}
 TASKS: Dict[str, Dict[str, Any]] = {}
 CACHE_EXPIRY = 3600
 
-def clean_text(text: str) -> str:
-    text = re.sub(r"http\S+", "", text)
-    text = re.sub(r"@\w+", "", text)
-    text = re.sub(r"#\w+", "", text)
-    return text.strip()
+# def clean_text(text: str) -> str:
+#     text = re.sub(r"http\S+", "", text)
+#     text = re.sub(r"@\w+", "", text)
+#     text = re.sub(r"#\w+", "", text)
+#     return text.strip()
 
-def is_relevant_comment(comment: str) -> bool:
-    """Filter out irrelevant comments like ads, promotions, spam."""
-    comment = comment.lower()
-    blacklist = [
-        "buy now", "subscribe", "follow me", "click here", "giveaway", "visit my",
-        "check my", "tickets", "link in bio", "promo", "discount", "book now",
-        "join us", "sale", "register", "watch my", "watch full", "sign up"
-    ]
-    return not any(word in comment for word in blacklist)
+# def is_relevant_comment(comment: str) -> bool:
+#     """Filter out irrelevant comments like ads, promotions, spam."""
+#     comment = comment.lower()
+#     blacklist = [
+#         "buy now", "subscribe", "follow me", "click here", "giveaway", "visit my",
+#         "check my", "tickets", "link in bio", "promo", "discount", "book now",
+#         "join us", "sale", "register", "watch my", "watch full", "sign up"
+#     ]
+#     return not any(word in comment for word in blacklist)
 
-def analyze_sentiment(comment: str) -> str:
-    comment = clean_text(comment)
-    if not comment:
-        return "neutral"
-    inputs = tokenizer(comment, return_tensors="pt", truncation=True, max_length=512)
-    with torch.no_grad():
-        outputs = model(**inputs)
-    scores = outputs.logits[0].numpy()
-    probs = np.exp(scores) / np.sum(np.exp(scores))
-    label = sentiment_labels[np.argmax(probs)]
-    return label
+# def analyze_sentiment(comment: str) -> str:
+#     comment = clean_text(comment)
+#     if not comment:
+#         return "neutral"
+#     inputs = tokenizer(comment, return_tensors="pt", truncation=True, max_length=512)
+#     with torch.no_grad():
+#         outputs = model(**inputs)
+#     scores = outputs.logits[0].numpy()
+#     probs = np.exp(scores) / np.sum(np.exp(scores))
+#     label = sentiment_labels[np.argmax(probs)]
+#     return label
 
-def compute_sentiment_percentages(comments: List[str]) -> Dict[str, float]:
-    pos, neg = 0, 0
-    for c in comments:
-        label = analyze_sentiment(c[:512])
-        if label == 'positive':
-            pos += 1
-        elif label == 'negative':
-            neg += 1
-    total = pos + neg
-    if total == 0:
-        return {"positive_percent": 0.0, "negative_percent": 0.0}
-    return {
-        "positive_percent": float(round((pos / total) * 100, 2)),
-        "negative_percent": float(round((neg / total) * 100, 2))
-    }
+# def compute_sentiment_percentages(comments: List[str]) -> Dict[str, float]:
+#     pos, neg = 0, 0
+#     for c in comments:
+#         label = analyze_sentiment(c[:512])
+#         if label == 'positive':
+#             pos += 1
+#         elif label == 'negative':
+#             neg += 1
+#     total = pos + neg
+#     if total == 0:
+#         return {"positive_percent": 0.0, "negative_percent": 0.0}
+#     return {
+#         "positive_percent": float(round((pos / total) * 100, 2)),
+#         "negative_percent": float(round((neg / total) * 100, 2))
+#     }
 
 def get_cache_key(url: str, language: str) -> str:
     return f"{url}:{language}"
@@ -123,38 +123,38 @@ def estimate_seo_score(title: str, tags: list, description: str, duration: int) 
         score += 25
     return min(score, 100)
 
-def get_all_comments(video_id: str, max_total: int = 1000) -> List[str]:
-    try:
-        api_key = os.getenv("YOUTUBE_API_KEY")
-        youtube = build("youtube", "v3", developerKey=api_key)
-        comments = []
-        next_page_token = None
+# def get_all_comments(video_id: str, max_total: int = 1000) -> List[str]:
+#     try:
+#         api_key = os.getenv("YOUTUBE_API_KEY")
+#         youtube = build("youtube", "v3", developerKey=api_key)
+#         comments = []
+#         next_page_token = None
 
-        while len(comments) < max_total:
-            request = youtube.commentThreads().list(
-                part="snippet",
-                videoId=video_id,
-                maxResults=100,
-                pageToken=next_page_token,
-                textFormat="plainText"
-            )
-            response = request.execute()
-            items = response.get("items", [])
+#         while len(comments) < max_total:
+#             request = youtube.commentThreads().list(
+#                 part="snippet",
+#                 videoId=video_id,
+#                 maxResults=100,
+#                 pageToken=next_page_token,
+#                 textFormat="plainText"
+#             )
+#             response = request.execute()
+#             items = response.get("items", [])
 
-            for item in items:
-                text = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
-                comments.append(text)
+#             for item in items:
+#                 text = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
+#                 comments.append(text)
 
-            next_page_token = response.get("nextPageToken")
-            if not next_page_token:
-                break
+#             next_page_token = response.get("nextPageToken")
+#             if not next_page_token:
+#                 break
 
-        return comments[:max_total]
-    except Exception:
-        logging.exception("Failed to fetch YouTube comments.")
-        return []
+#         return comments[:max_total]
+#     except Exception:
+#         logging.exception("Failed to fetch YouTube comments.")
+#         return []
 
-async def analyze_video_llm(task_id: str, prompt: str, summary: dict, sentiment_summary: dict) -> None:
+async def analyze_video_llm(task_id: str, prompt: str, summary: dict) -> None:
     try:
         def sync_openai_call():
             completion = client.chat.completions.create(
@@ -175,7 +175,7 @@ async def analyze_video_llm(task_id: str, prompt: str, summary: dict, sentiment_
         TASKS[task_id] = {
             "report": generated_text,
             "summary": summary,
-            "sentiment_summary": sentiment_summary,
+            # "sentiment_summary": sentiment_summary,
             "title": summary.get("title", ""),
             "status": "done"
         }
@@ -255,9 +255,9 @@ async def analyze(request: Request):
 
         transcript_excerpt = (await fetch_subtitle_text(subtitles_url)).strip()[:1000] or "No subtitles available."
         lang_name = {"en": "English", "hi": "Hindi", "bn": "Bengali"}.get(language, "English")
-        comments = await run_in_threadpool(get_all_comments, video_id, 1000)
-        filtered_comments = [c for c in comments if is_relevant_comment(c)]
-        sentiment_summary = compute_sentiment_percentages(filtered_comments) if filtered_comments else {"positive_percent": 0, "negative_percent": 0}
+        # comments = await run_in_threadpool(get_all_comments, video_id, 1000)
+        # filtered_comments = [c for c in comments if is_relevant_comment(c)]
+        # sentiment_summary = compute_sentiment_percentages(filtered_comments) if filtered_comments else {"positive_percent": 0, "negative_percent": 0}
 
         prompt = f"""
 
@@ -339,12 +339,12 @@ Make your response in {lang_name}. Include 3 performance issues, 3 quick fixes, 
             "interaction_rate": interaction_rate,
             "retention_rate": retention_rate,
             "transcript_excerpt": transcript_excerpt,
-            "sentiment_summary": sentiment_summary
+            # "sentiment_summary": sentiment_summary
         }
 
         task_id = f"task-{int(time.time() * 1000)}"
         TASKS[task_id] = {"status": "processing"}
-        asyncio.create_task(analyze_video_llm(task_id, prompt, summary, sentiment_summary))
+        asyncio.create_task(analyze_video_llm(task_id, prompt, summary))
 
         CACHE[cache_key] = {"result": {"task_id": task_id, "status": "processing"}, "timestamp": now}
         return {"task_id": task_id, "status": "processing"}
@@ -362,7 +362,7 @@ async def get_result(task_id: str):
             "status": "not_found",
             "report": None,
             "summary": None,
-            "sentiment_summary": None,
+            # "sentiment_summary": None,
             "video_title": None
         }
 
@@ -370,16 +370,16 @@ async def get_result(task_id: str):
         "status": result.get("status"),
         "report": result.get("report"),
         "summary": result.get("summary"),
-        "sentiment_summary": result.get("sentiment_summary"),
+        # "sentiment_summary": result.get("sentiment_summary"),
         "video_title": result.get("title")
     }
 
-@app.post("/analyze-sentiment")
-async def analyze_sentiment_route(comments: List[str] = Body(...)):
-    try:
-        filtered_comments = [c for c in comments if is_relevant_comment(c)]
-        sentiment_summary = compute_sentiment_percentages(filtered_comments)
-        return sentiment_summary
-    except Exception as e:
-        logging.error("Sentiment analysis error", exc_info=True)
-        return JSONResponse(status_code=500, content={"detail": f"Sentiment error: {str(e)}"})
+# @app.post("/analyze-sentiment")
+# async def analyze_sentiment_route(comments: List[str] = Body(...)):
+#     try:
+#         filtered_comments = [c for c in comments if is_relevant_comment(c)]
+#         sentiment_summary = compute_sentiment_percentages(filtered_comments)
+#         return sentiment_summary
+#     except Exception as e:
+#         logging.error("Sentiment analysis error", exc_info=True)
+#         return JSONResponse(status_code=500, content={"detail": f"Sentiment error: {str(e)}"})

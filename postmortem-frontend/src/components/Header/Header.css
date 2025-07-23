@@ -1,90 +1,3 @@
-/* header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  animation: fadeInDown 0.7s ease-in-out;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-header h1 {
-  background: linear-gradient(90deg, #00c6ff, #0072ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-size: 2.5rem;
-  font-weight: 800;
-  text-shadow: 0 0 15px rgba(0, 198, 255, 0.4);
-  margin: 0;
-}
-
-.toggle-btn {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  background-color: transparent;
-  font-size: 14px;
-  cursor: pointer;
-} */
-
-/* .header {
-  width: 100%;
-  padding: 1rem 1.5rem;
-  box-sizing: border-box;
-  animation: fadeInDown 0.7s ease-in-out;
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  flex-wrap: nowrap;
-}
-.history-toggle-btn {
-  background: transparent;
-  border: none;
-  font-size: 1rem;
-  cursor: pointer;
-  margin: 0 1rem;
-}
-
-.logo {
-  font-size: 1.6rem;
-  font-weight: bold;
-  color: #00d4ff;
-  white-space: nowrap;
-  background: linear-gradient(90deg, #00c6ff, #0072ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-size: 2.5rem;
-  font-weight: 800;
-  text-shadow: 0 0 15px rgba(0, 198, 255, 0.4);
-}
-
-
-@media (max-width: 768px) {
-  .logo {
-    font-size: 1.3rem;
-    font-family: "Poppins", sans-serif;
-   
-  }
-  .theme-toggle {
-  margin-left: auto;
-   background: var(--gradient-primary);
-    color: #fff;
-    cursor: pointer;
-    box-shadow: 0 8px 18px rgba(0, 198, 255, 0.25);
-    transition: all 0.25s ease-in-out;
-}
-
-@media (min-width: 769px) {
-  .history-toggle-btn {
-    display: none;
-  }
-}
-} */
-
-
 .header {
   width: 100%;
   padding: 1rem 2rem;
@@ -102,17 +15,28 @@ header h1 {
   width: 100%;
   gap: 1.5rem; 
 }
-
+.logo-section {
+  display: flex;
+  align-items: center;
+}
+.logo-text {
+  display: flex;
+  flex-direction: column;
+}
 .logo {
   font-family: 'Poppins', sans-serif;
-  font-size: 1.6rem;
+  font-size: 2.5rem;
   font-weight: 700;
   background: linear-gradient(90deg, #00d5ff, #0085ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-right: 1rem;
 }
-
+.logo-subtitle {
+  margin-left: 64px;
+  font-size: 0.75rem;
+  color: #ccc;
+}
 /* Right section containing buttons */
 .header-right {
   display: flex;
