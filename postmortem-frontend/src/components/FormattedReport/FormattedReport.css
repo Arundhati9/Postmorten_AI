@@ -1,92 +1,73 @@
 .ai-report-content {
   width: 100%;
-  margin: 2rem 0 3rem; /* Top and bottom spacing */
-  padding: 2rem;
-  background-color: rgba(0, 198, 255, 0.12);
-  color: #111827;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background-color: rgba(0, 198, 255, 0.12);
+  color: #87a7d5;
   font-family: 'Inter', sans-serif;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   box-sizing: border-box;
-  position: relative;
-  z-index: 1;
 }
 
-/* Avoid container width restrictions */
 .dashboard-container,
 .page-content,
 .report-wrapper {
   width: 100%;
 }
 
-/* Paragraph styling */
 .ai-report-content p {
-  margin-bottom: 1.3rem;
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: #75b4ef;
-  line-height: 1.65;
-}
-
-/* Section headings */
-.report-section-heading {
-  font-size: 3rem;
-  font-weight: 900;
-  color: #ef4444;
-  margin: 1.8rem 0 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.report-section-heading::before {
-  content: "🚫";
+  margin-bottom: 1rem;
   font-size: 1rem;
-}
-
-/* Bullet title (subheadings) */
-.report-bullet-title {
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin: 1.7rem 0 0.6rem;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-}
-
-.report-bullet-title::before {
-  content: "⚡";
-  font-size: 1rem;
-  color: #f59e0b;
-}
-
-/* Body content under bullets */
-.report-body-text {
-  font-size: 0.95rem;
-  color: #374151;
+  font-weight: 500;
+  color: #dbdee3;
   line-height: 1.6;
-  padding-left: 1.6rem;
-  margin-bottom: 1.2rem;
+}
+
+.report-section-heading {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #f5f6f8;
+  margin: 1.5rem 0 1rem;
+}
+
+.report-bullet-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 1.2rem 0 0.5rem;
+  color: #ecedee;
+}
+
+.report-body-text {
+  font-size: 0.8rem;
+  color: #e1e9f5;
+  line-height: 1.6;
+  padding-left: 1rem;
+  margin-bottom: 0.8rem;
   position: relative;
 }
 
 .report-body-text::before {
-  content: "✔️";
+  content: "•";
   position: absolute;
   left: 0;
-  top: 0.1rem;
-  font-size: 0.9rem;
+  top: 0;
+  font-size: 1rem;
+  line-height: 1;
+  color: #9ca3af;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .ai-report-content {
-    padding: 1.5rem 1.2rem;
-    margin: 1rem 0 2rem; /* Maintain bottom margin on small screens */
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+
+  .report-section-heading {
+    font-size: 1.5rem;
   }
 
   .report-body-text {
-    padding-left: 1.8rem;
+    padding-left: 1.2rem;
   }
 }

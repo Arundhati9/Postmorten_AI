@@ -187,7 +187,7 @@ async def analyze(request: Request):
         prompt = f"""
 You are a no-BS YouTube strategist and growth consultant. A creator has uploaded a video for review. It might be a hit. It might be a flop.
 ...
-Make your response in {lang_name}. Include 3 performance issues, 3 quick fixes, and one long-term strategy.
+Make your response in {lang_name}. Include 3 performance issues, 3 quick fixes, and one long-term strategy. Don't bold anything.   
 """
 
         summary = {
