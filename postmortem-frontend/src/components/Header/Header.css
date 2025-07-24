@@ -27,7 +27,7 @@
   font-family: 'Poppins', sans-serif;
   font-size: 2.5rem;
   font-weight: 700;
-  background: linear-gradient(90deg, #00d5ff, #0085ff);
+  background: linear-gradient(90deg, #0085ff, #0085ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-right: 1rem;
@@ -78,7 +78,7 @@
   height: 25px;
   margin-left: 0px;
   background: transparent;
-  border: 1px solid #00d5ff;
+  border: 1px solid #0085ff;
   border-radius: 12px;
   display: flex;
   justify-content: center;

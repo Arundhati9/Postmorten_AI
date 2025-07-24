@@ -9,18 +9,13 @@ import yt_dlp
 import httpx
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, Body
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from openai import OpenAI
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from starlette.concurrency import run_in_threadpool
 
-import numpy as np
-import torch
-
 from yt_helper import get_video_stats, get_channel_stats
-from googleapiclient.discovery import build
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -29,10 +24,6 @@ client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv("OPENROUTER_API_KEY"),
 )
-
-# tokenizer = AutoTokenizer.from_pretrained("cardiffnlp/twitter-roberta-base-sentiment")
-# model = AutoModelForSequenceClassification.from_pretrained("cardiffnlp/twitter-roberta-base-sentiment")
-# sentiment_labels = ['negative', 'neutral', 'positive']
 
 app = FastAPI()
 
@@ -47,50 +38,7 @@ app.add_middleware(
 CACHE: Dict[str, Dict[str, Any]] = {}
 TASKS: Dict[str, Dict[str, Any]] = {}
 CACHE_EXPIRY = 3600
-
-# def clean_text(text: str) -> str:
-#     text = re.sub(r"http\S+", "", text)
-#     text = re.sub(r"@\w+", "", text)
-#     text = re.sub(r"#\w+", "", text)
-#     return text.strip()
-
-# def is_relevant_comment(comment: str) -> bool:
-#     """Filter out irrelevant comments like ads, promotions, spam."""
-#     comment = comment.lower()
-#     blacklist = [
-#         "buy now", "subscribe", "follow me", "click here", "giveaway", "visit my",
-#         "check my", "tickets", "link in bio", "promo", "discount", "book now",
-#         "join us", "sale", "register", "watch my", "watch full", "sign up"
-#     ]
-#     return not any(word in comment for word in blacklist)
-
-# def analyze_sentiment(comment: str) -> str:
-#     comment = clean_text(comment)
-#     if not comment:
-#         return "neutral"
-#     inputs = tokenizer(comment, return_tensors="pt", truncation=True, max_length=512)
-#     with torch.no_grad():
-#         outputs = model(**inputs)
-#     scores = outputs.logits[0].numpy()
-#     probs = np.exp(scores) / np.sum(np.exp(scores))
-#     label = sentiment_labels[np.argmax(probs)]
-#     return label
-
-# def compute_sentiment_percentages(comments: List[str]) -> Dict[str, float]:
-#     pos, neg = 0, 0
-#     for c in comments:
-#         label = analyze_sentiment(c[:512])
-#         if label == 'positive':
-#             pos += 1
-#         elif label == 'negative':
-#             neg += 1
-#     total = pos + neg
-#     if total == 0:
-#         return {"positive_percent": 0.0, "negative_percent": 0.0}
-#     return {
-#         "positive_percent": float(round((pos / total) * 100, 2)),
-#         "negative_percent": float(round((neg / total) * 100, 2))
-#     }
+sse_updates: Dict[str, asyncio.Queue] = {}
 
 def get_cache_key(url: str, language: str) -> str:
     return f"{url}:{language}"
@@ -107,7 +55,7 @@ async def fetch_subtitle_text(sub_url: str) -> str:
                 line.strip() for line in lines
                 if line.strip() and not line.startswith("WEBVTT") and "-->" not in line
             ])
-    except Exception as e:
+    except Exception:
         logging.exception("Failed to fetch subtitles")
         return ""
 
@@ -123,42 +71,11 @@ def estimate_seo_score(title: str, tags: list, description: str, duration: int) 
         score += 25
     return min(score, 100)
 
-# def get_all_comments(video_id: str, max_total: int = 1000) -> List[str]:
-#     try:
-#         api_key = os.getenv("YOUTUBE_API_KEY")
-#         youtube = build("youtube", "v3", developerKey=api_key)
-#         comments = []
-#         next_page_token = None
-
-#         while len(comments) < max_total:
-#             request = youtube.commentThreads().list(
-#                 part="snippet",
-#                 videoId=video_id,
-#                 maxResults=100,
-#                 pageToken=next_page_token,
-#                 textFormat="plainText"
-#             )
-#             response = request.execute()
-#             items = response.get("items", [])
-
-#             for item in items:
-#                 text = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
-#                 comments.append(text)
-
-#             next_page_token = response.get("nextPageToken")
-#             if not next_page_token:
-#                 break
-
-#         return comments[:max_total]
-#     except Exception:
-#         logging.exception("Failed to fetch YouTube comments.")
-#         return []
-
 async def analyze_video_llm(task_id: str, prompt: str, summary: dict) -> None:
     try:
         def sync_openai_call():
             completion = client.chat.completions.create(
-                model="deepseek/deepseek-r1-0528:free",
+                model="tngtech/deepseek-r1t2-chimera:free",
                 extra_headers={
                     "HTTP-Referer": "http://localhost:3000",
                     "X-Title": "PostMortem AI",
@@ -170,18 +87,30 @@ async def analyze_video_llm(task_id: str, prompt: str, summary: dict) -> None:
             )
             return completion
 
+        if task_id in sse_updates:
+            sse_updates[task_id].put_nowait("data: Generating report...\n\n")
+
         completion = await run_in_threadpool(sync_openai_call)
         generated_text = completion.choices[0].message.content.strip()
+
         TASKS[task_id] = {
             "report": generated_text,
             "summary": summary,
-            # "sentiment_summary": sentiment_summary,
             "title": summary.get("title", ""),
             "status": "done"
         }
+
+        if task_id in sse_updates:
+            sse_updates[task_id].put_nowait("data: Report generated.\n\n")
+            sse_updates[task_id].put_nowait(f"data: FINAL_REPORT: {generated_text}\n\n")
+            sse_updates[task_id].put_nowait("data: [DONE]\n\n")
+
     except Exception as e:
         logging.error(f"Task {task_id} failed", exc_info=True)
         TASKS[task_id] = {"error": str(e), "status": "error"}
+        if task_id in sse_updates:
+            sse_updates[task_id].put_nowait(f"data: Error: {str(e)}\n\n")
+            sse_updates[task_id].put_nowait("data: [DONE]\n\n")
 
 @app.post("/analyze")
 async def analyze(request: Request):
@@ -247,7 +176,6 @@ async def analyze(request: Request):
         with yt_dlp.YoutubeDL(ydl_opts_subs) as ydl:
             info = ydl.extract_info(url, download=False)
 
-        # Check for available subtitles & fetch url for text
         if "subtitles" in info and language in info["subtitles"]:
             subtitles_url = info["subtitles"][language][0].get("url", "")
         elif "automatic_captions" in info and language in info["automatic_captions"]:
@@ -255,69 +183,10 @@ async def analyze(request: Request):
 
         transcript_excerpt = (await fetch_subtitle_text(subtitles_url)).strip()[:1000] or "No subtitles available."
         lang_name = {"en": "English", "hi": "Hindi", "bn": "Bengali"}.get(language, "English")
-        # comments = await run_in_threadpool(get_all_comments, video_id, 1000)
-        # filtered_comments = [c for c in comments if is_relevant_comment(c)]
-        # sentiment_summary = compute_sentiment_percentages(filtered_comments) if filtered_comments else {"positive_percent": 0, "negative_percent": 0}
 
         prompt = f"""
-
 You are a no-BS YouTube strategist and growth consultant. A creator has uploaded a video for review. It might be a hit. It might be a flop.
-
-Your job: break down performance with ruthless honesty using viewer signals (CTR, retention, engagement, comments), and then:
-
-If the video underperformed:
-Diagnose exact reasons: Was the intro too slow? Did the pacing dip? Was the hook weak? Was the thumbnail misleading? Was the script emotionally flat?
-
-Give hyper-actionable fixes: Rewrite the title, change hook structure, suggest better pacing/editing/script rewrites, reframe the concept if needed.
-
-If the video performed well:
-Reverse-engineer what made it work: Strong hook? Tight editing? Story-driven narrative? Resonant emotion? Unique POV? Visual polish?
-
-Suggest how to scale this success: Series potential? Reuse structure in other topics? Tighten production workflow? Repeatable hook format?
-
-Always be:
-
-Blunt but tactical — no sugarcoating
-
-Specific — no vague clichés like “just improve pacing” or “add emotion”
-
-Data-driven — retention dips? CTR low? Hook drop-off? Match every insight to a metric
-
-Provide 3 structured sections:
-Performance Analysis: Use retention, CTR, avg. view duration, likes/comments ratio. Highlight any retention cliff timestamps.
-
-Transcript-Based Thematic Evaluation: Evaluate tone/emotion. Do keywords/themes align with title, description, and tags? Call out mismatches.
-
-Actionable Recommendations: Specific title rewrites, intro fixes, pacing edits, visual tweaks, or full reframes. All advice must be tactical and testable.
-
-❌ Avoid generic fluff. Never suggest actions like “ask for likes or subs.”
-
-# Video
-- Title: {title}
-- Description: {description}
-- Tags: {', '.join(tags)}
-- Category: {category}
-- Duration: {duration}s
-- Upload Date: {upload_date}
-
-# Channel
-- Name: {channel}
-- Subscribers: {subscriber_count}
-- Channel URL: {channel_url}
-
-# Performance
-- Views: {view_count}
-- Likes: {like_count}
-- Comments: {comment_count}
-- CTR: {ctr}%
-- Avg. View Duration: {avg_view_duration}s
-- SEO Score: {seo_score}/100
-- Engagement Rate: {interaction_rate}%
-- Retention Rate: {retention_rate}%
-
-# Transcript (excerpt)
-{transcript_excerpt}
-
+...
 Make your response in {lang_name}. Include 3 performance issues, 3 quick fixes, and one long-term strategy.
 """
 
@@ -339,11 +208,12 @@ Make your response in {lang_name}. Include 3 performance issues, 3 quick fixes, 
             "interaction_rate": interaction_rate,
             "retention_rate": retention_rate,
             "transcript_excerpt": transcript_excerpt,
-            # "sentiment_summary": sentiment_summary
         }
 
         task_id = f"task-{int(time.time() * 1000)}"
         TASKS[task_id] = {"status": "processing"}
+        sse_updates[task_id] = asyncio.Queue()
+
         asyncio.create_task(analyze_video_llm(task_id, prompt, summary))
 
         CACHE[cache_key] = {"result": {"task_id": task_id, "status": "processing"}, "timestamp": now}
@@ -356,13 +226,11 @@ Make your response in {lang_name}. Include 3 performance issues, 3 quick fixes, 
 @app.get("/result/{task_id}")
 async def get_result(task_id: str):
     result = TASKS.get(task_id)
-    # Always include all fields; set to None/missing if not present.
     if not result:
         return {
             "status": "not_found",
             "report": None,
             "summary": None,
-            # "sentiment_summary": None,
             "video_title": None
         }
 
@@ -370,16 +238,21 @@ async def get_result(task_id: str):
         "status": result.get("status"),
         "report": result.get("report"),
         "summary": result.get("summary"),
-        # "sentiment_summary": result.get("sentiment_summary"),
         "video_title": result.get("title")
     }
 
-# @app.post("/analyze-sentiment")
-# async def analyze_sentiment_route(comments: List[str] = Body(...)):
-#     try:
-#         filtered_comments = [c for c in comments if is_relevant_comment(c)]
-#         sentiment_summary = compute_sentiment_percentages(filtered_comments)
-#         return sentiment_summary
-#     except Exception as e:
-#         logging.error("Sentiment analysis error", exc_info=True)
-#         return JSONResponse(status_code=500, content={"detail": f"Sentiment error: {str(e)}"})
+@app.get("/events/{task_id}")
+async def events(task_id: str):
+    async def event_stream():
+        queue = sse_updates.get(task_id)
+        if not queue:
+            yield "data: No such task.\n\n"
+            return
+        while True:
+            message = await queue.get()
+            yield message
+            if message.strip().endswith("[DONE]"):
+                break
+        sse_updates.pop(task_id, None)
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")

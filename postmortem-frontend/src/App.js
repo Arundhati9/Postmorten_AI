@@ -1,3 +1,4 @@
+// ...imports remain unchanged
 import React, { useState, useEffect, useRef } from "react";
 import "@fontsource/inter/400.css";
 import "@fontsource/inter/600.css";
@@ -21,7 +22,6 @@ import StatsOverview from "./components/StatsOverview/StatsOverview";
 import VideoCharts from "./components/VideoCharts/VideoCharts";
 // import SentimentSummary from "./components/SentimentSummary/SentimentSummary";
 
-
 import "./App.css";
 import Footer from "./components/Footer/Footer";
 
@@ -36,41 +36,20 @@ const extractYouTubeVideoId = (url) => {
 
 function App() {
   const [url, setUrl] = useState("");
-  const [reportType, setReportType] = useState("quick");
   const [report, setReport] = useState("");
   const [summary, setSummary] = useState(null);
-  // const [sentiment, setSentiment] = useState(null);
   const [loading, setLoading] = useState(false);
   const [stepMessage, setStepMessage] = useState("");
   const [history, setHistory] = useState(() => {
     const saved = localStorage.getItem("analysisHistory");
     return saved ? JSON.parse(saved) : [];
   });
-  const [darkMode, setDarkMode] = useState(true);
   const [activePopup, setActivePopup] = useState(null);
   const [videoId, setVideoId] = useState(null);
   const [showHistory, setShowHistory] = useState(window.innerWidth >= 768);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const loadingBar = useRef(null);
-  const pollingTimeout = useRef(null);
-  const MAX_POLLS = 25; // You can adjust if you want
-
-  // --- Clean up any polling timeout on component unmount ONLY ---
-  useEffect(() => {
-    return () => {
-      if (pollingTimeout.current) {
-        clearTimeout(pollingTimeout.current);
-        pollingTimeout.current = null;
-      }
-    };
-  }, []);
-
-  // --- Just theme effect, don't clear pollingTimeout here! ---
-  useEffect(() => {
-    document.body.classList.toggle("dark", darkMode);
-    // document.body.classList.toggle("light", !darkMode);
-  }, [darkMode]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -88,63 +67,74 @@ function App() {
     return regex.test(url);
   };
 
-  // --- Polling logic with robust exit/cleanup ---
-  const pollForResult = async (taskId, analyzedUrl, pollCount = 0) => {
-    setStepMessage("⏳ Waiting for AI analysis...");
+  const listenToSSE = (taskId, analyzedUrl) => {
+    const source = new EventSource(`${API_BASE_URL}/events/${taskId}`);
 
-    if (pollCount > MAX_POLLS) {
-      toast.error("❌ AI analysis timeout, please try again later.");
-      setReport("❌ Analysis timed out.");
-      setLoading(false);
-      setStepMessage("");
-      loadingBar.current?.complete();
-      return;
+    setStepMessage("📡 Waiting for real-time updates...");
+
+    source.onmessage = (event) => {
+      const msg = event.data;
+      console.log("SSE:", msg);
+
+      if (msg === "done" || msg === "error") {
+        source.close();
+        fetchFinalResult(taskId, analyzedUrl);
+      } else {
+        setStepMessage(msg);
+      }
+    };
+
+    source.onerror = (err) => {
+      console.error("SSE error:", err);
+      source.close();
+      pollForResult(taskId, analyzedUrl);
+    };
+  };
+
+  const pollForResult = async (taskId, analyzedUrl, retries = 30, interval = 3000) => {
+    setStepMessage("🔁 Polling backend for result...");
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/result/${taskId}`);
+        if (res.data.status === "done" && res.data.report) {
+          displayReport(
+            res.data.report,
+            res.data.summary,
+            analyzedUrl,
+            res.data.video_title
+          );
+          return;
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
+      await new Promise((r) => setTimeout(r, interval));
     }
+    toast.error("❌ Analysis timeout. Please try again.");
+    setLoading(false);
+    setStepMessage("");
+    loadingBar.current?.complete();
+  };
 
+  const fetchFinalResult = async (taskId, analyzedUrl) => {
     try {
       const res = await axios.get(`${API_BASE_URL}/result/${taskId}`);
-
-      if (res.data.status === "processing") {
-        pollingTimeout.current = setTimeout(() => {
-          pollForResult(taskId, analyzedUrl, pollCount + 1);
-        }, 1500 + Math.min(pollCount, 4) * 500);
-      } else if (res.data.status === "done" && res.data.report) {
-        if (pollingTimeout.current) {
-          clearTimeout(pollingTimeout.current);
-          pollingTimeout.current = null;
-        }
+      if (res.data.status === "done" && res.data.report) {
         displayReport(
           res.data.report,
           res.data.summary,
           analyzedUrl,
-          // res.data.sentiment_summary,
           res.data.video_title
         );
-      } else if (res.data.status === "error" || res.data.error) {
-        if (pollingTimeout.current) {
-          clearTimeout(pollingTimeout.current);
-          pollingTimeout.current = null;
-        }
-        toast.error("❌ AI service error: " + (res.data.error || "Unknown error"));
-        setReport("❌ Error analyzing video.");
+      } else {
+        toast.error("❌ Failed to fetch analysis result.");
         setLoading(false);
         setStepMessage("");
         loadingBar.current?.complete();
-      } else {
-        if (pollingTimeout.current) {
-          clearTimeout(pollingTimeout.current);
-          pollingTimeout.current = null;
-        }
-        throw new Error("Unknown backend response format.");
       }
     } catch (err) {
-      if (pollingTimeout.current) {
-        clearTimeout(pollingTimeout.current);
-        pollingTimeout.current = null;
-      }
-      console.error("Polling error:", err);
-      toast.error("❌ AI analysis failed or took too long.");
-      setReport("❌ Error analyzing video.");
+      console.error("Fetch result error:", err);
+      toast.error("❌ Error analyzing video.");
       setLoading(false);
       setStepMessage("");
       loadingBar.current?.complete();
@@ -152,11 +142,6 @@ function App() {
   };
 
   const handleAnalyze = async () => {
-    // --- Always clear pending poll before a new one ---
-    if (pollingTimeout.current) {
-      clearTimeout(pollingTimeout.current);
-      pollingTimeout.current = null;
-    }
     if (!url.trim()) return;
     if (!isValidYouTubeUrl(url)) {
       toast.error("❌ Please enter a valid YouTube video URL.");
@@ -166,7 +151,6 @@ function App() {
     setLoading(true);
     setReport("");
     setSummary(null);
-    // setSentiment(null);
     loadingBar.current?.continuousStart();
     setStepMessage("🔍 Extracting video data...");
 
@@ -176,19 +160,15 @@ function App() {
       await new Promise((res) => setTimeout(res, 500));
       setStepMessage("🤖 Generating AI report...");
 
-      const response = await axios.post(`${API_BASE_URL}/analyze`, {
-        url,
-        report_type: reportType,
-      });
+      const response = await axios.post(`${API_BASE_URL}/analyze`, { url });
 
       if (response.data.task_id) {
-        pollForResult(response.data.task_id, url);
+        listenToSSE(response.data.task_id, url);
       } else if (response.data.report) {
         displayReport(
           response.data.report,
           response.data.summary,
           url,
-          // response.data.sentiment_summary,
           response.data.video_title
         );
       } else {
@@ -204,17 +184,10 @@ function App() {
     }
   };
 
-  const displayReport = (
-    generatedReport,
-    videoSummary,
-    urlToSave,
-    sentiment_summary,
-    videoTitle
-  ) => {
+  const displayReport = (generatedReport, videoSummary, urlToSave, videoTitle) => {
     const id = extractYouTubeVideoId(urlToSave);
     setVideoId(id);
     setReport(generatedReport);
-    // setSentiment(sentiment_summary || (videoSummary ? videoSummary.sentiment_summary : null));
     setSummary({
       ...videoSummary,
       retention_rate: Number(
@@ -280,14 +253,12 @@ function App() {
     <div className="App">
       <LoadingBar color="#00c6ff" height={3} ref={loadingBar} />
       <ToastContainer position="top-center" autoClose={3000} />
-      <Header 
-        darkMode={darkMode} 
-        setDarkMode={setDarkMode}
+      <Header
         history={history}
         onSelect={loadReport}
         onDelete={deleteReport}
       />
-      {/* <Theme darkMode={darkMode} setDarkMode={setDarkMode} /> */}
+
       <div className="main-section">
         <HistoryPanel
           history={history}
@@ -326,15 +297,7 @@ function App() {
                 📋
               </span>
             </div>
-            {/* <select
-              value={reportType}
-              onChange={(e) => setReportType(e.target.value)}
-              disabled={loading}
-              style={{ marginLeft: "10px", padding: "5px" }}
-            >
-              <option value="quick">Quick Report</option>
-              <option value="deep">Deep Report</option>
-            </select> */}
+
             <button onClick={handleAnalyze} disabled={loading} className="analyse">
               {loading ? "Analyzing..." : "Analyze"}
             </button>
@@ -354,10 +317,9 @@ function App() {
                   seoScore={summary.seo_score}
                 />
               )}
-              {/* <SentimentSummary sentiment={sentiment} /> */}
               <FormattedReport rawReport={report} />
               <button onClick={exportPDF} className="analyse">📄 Export as PDF</button>
-              <Footer/>
+              <Footer />
             </div>
           )}
         </main>

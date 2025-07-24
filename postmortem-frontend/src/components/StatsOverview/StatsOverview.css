@@ -1,122 +1,80 @@
+/* Page Wrapper */
 .stats-overview {
-  margin-bottom: 2.5rem;
-  padding: 2rem;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 198, 255, 0.05));
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 198, 255, 0.2);
-  box-shadow:
-    0 20px 60px rgba(0, 198, 255, 0.07),
-    0 10px 30px rgba(0, 198, 255, 0.08) inset;
-  animation: fadeInUp 0.7s ease-in-out both;
-  overflow: hidden;
-  position: relative;
+  padding: 1.5rem;
+  background-color: #0d0d0d;
+  color: #eaeaea;
+  font-family: Arial, sans-serif;
+  padding-bottom: 1rem;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(25px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
+/* Grid layout for stat cards */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
 }
 
+/* Individual stat box */
 .stat-box {
-  position: relative;
-  padding: 1.6rem 1.8rem;
-  border-radius: 22px;
-  background: radial-gradient(ellipse at top left, rgba(0, 198, 255, 0.07), rgba(255, 255, 255, 0.03));
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow:
-    0 6px 18px rgba(0, 198, 255, 0.12),
-    inset 0 0 0 1px rgba(0, 198, 255, 0.08);
-  transition: all 0.3s ease, transform 0.3s ease;
-  overflow: hidden;
-  z-index: 1;
-  cursor: default;
+  background-color: #1a1a1a;
+  border: 1px solid #2c2c2c;
+  border-radius: 8px;
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100px;
+  transition: background-color 0.2s ease;
 }
 
-.stat-box:hover {
-  transform: translateY(-8px) scale(1.015);
-  box-shadow:
-    0 16px 30px rgba(0, 198, 255, 0.25),
-    inset 0 0 0 1px rgba(0, 198, 255, 0.15);
-  border: 1px solid rgba(0, 198, 255, 0.3);
-}
-
-.stat-box::before {
-  content: "";
-  position: absolute;
-  top: -15%;
-  left: -20%;
-  width: 160%;
-  height: 160%;
-  background: radial-gradient(circle, rgba(0, 198, 255, 0.2), transparent 80%);
-  filter: blur(60px);
-  opacity: 0;
-  transition: opacity 0.5s ease;
-  z-index: 0;
-}
-
-.stat-box:hover::before {
-  opacity: 0.3;
-}
-
+/* Header section: icon + label */
 .stat-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-weight: 600;
-  font-size: 1.05rem;
-  font-family: "Poppins", sans-serif;
-  color: var(--text-color);
-  margin-bottom: 0.5rem;
-  position: relative;
-  z-index: 1;
-  letter-spacing: 0.3px;
+  gap: 0.4rem;
+  margin-bottom: 0.2rem;
 }
 
+/* Icon styling */
 .icon {
-  font-size: 1.5rem;
-  color: #00c6ff;
-  transition: transform 0.3s ease, color 0.3s ease, text-shadow 0.3s ease;
-  z-index: 1;
+  font-size: 0.8rem;
+  color: #ffb400;
 }
 
-.stat-box:hover .icon {
-  transform: scale(1.2);
-  color: #00eaff;
-  text-shadow: 0 0 8px #00eaff88;
+/* Label text */
+.label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #cccccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.stat-box .value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-color);
-  position: relative;
-  z-index: 1;
-  letter-spacing: 0.5px;
-  transition: color 0.3s ease;
-  animation: popIn 0.5s ease forwards;
+/* Main value text */
+.value {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #ffffff;
+  word-wrap: break-word;
 }
 
-@keyframes popIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.95);
+/* Responsive tweaks for smaller screens */
+@media (max-width: 400px) {
+  .stat-box {
+    height: 90px;
+    padding: 0.6rem;
   }
-  100% {
-    opacity: 1;
-    transform: scale(1);
+
+  .label {
+    font-size: 0.7rem;
+  }
+
+  .value {
+    font-size: 0.8rem;
+  }
+
+  .icon {
+    font-size: 0.8rem;
   }
 }

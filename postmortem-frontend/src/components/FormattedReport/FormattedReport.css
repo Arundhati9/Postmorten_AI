@@ -1,162 +1,92 @@
-/* ==== Core Glass Neumorphic Background ==== */
 .ai-report-content {
-  background: linear-gradient(135deg, rgba(40,40,70,0.67), rgba(13,71,161,0.40) 95%);
-  border-radius: 32px;
-  box-shadow:
-    0 8px 32px 0 rgba(2,45,106,0.30),
-    0 1.5px 0 0 rgba(9, 121, 255, 0.04) inset;
-  padding: 3.5rem 2.5rem 2.5rem 2rem;
-  color: #f2faff;
-  font-family: 'Inter', 'Poppins', sans-serif;
-  backdrop-filter: blur(19px);
-  border: 1.7px solid rgba(7,206,255, 0.13);
+  width: 100%;
+  margin: 2rem 0 3rem; /* Top and bottom spacing */
+  padding: 2rem;
+  background-color: rgba(0, 198, 255, 0.12);
+  color: #111827;
+  font-family: 'Inter', sans-serif;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
   position: relative;
-  overflow: hidden;
+  z-index: 1;
 }
 
-/* ==== Neon Gradient Animated Main Heading ==== */
+/* Avoid container width restrictions */
+.dashboard-container,
+.page-content,
+.report-wrapper {
+  width: 100%;
+}
+
+/* Paragraph styling */
+.ai-report-content p {
+  margin-bottom: 1.3rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #75b4ef;
+  line-height: 1.65;
+}
+
+/* Section headings */
 .report-section-heading {
-  font-size: 1.5rem;
+  font-size: 3rem;
   font-weight: 900;
-  letter-spacing: 1.3px;
-  font-family: 'Poppins', sans-serif;
-  margin-bottom: 1.7rem;
-  padding-bottom: 0.55rem;
-  color: transparent;
-  background: linear-gradient(90deg, #00e5ff 40%, #537cff 60%, #eff7fa 130%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  animation: hueRotate 7s linear infinite;
-  border-bottom: 3px solid #6ee7ff;
-  text-shadow: 0 6px 32px #03285133, 0 1px 0 #8adfff44;
-}
-
-@keyframes hueRotate {
-  from { filter: hue-rotate(0deg); }
-  to   { filter: hue-rotate(360deg); }
-}
-
-/* ==== Subheading with Vertical Accent and Icon ==== */
-.report-bullet-title {
+  color: #ef4444;
+  margin: 1.8rem 0 1rem;
   display: flex;
   align-items: center;
+  gap: 0.6rem;
+}
+
+.report-section-heading::before {
+  content: "🚫";
   font-size: 1rem;
-  font-weight: 650;
-  padding-left: 1.3rem;
-  margin: 2.2rem 0 1.2rem 0;
-  color: #70d3fe;
-  border-left: 6px solid #00e5ff;
-  border-radius: 8px;
-  letter-spacing: 0.7px;
-  box-shadow: 0 5px 24px #00e5ff12;
-  position: relative;
-  background: rgba(0,229,255,0.09);
-  transition: background 0.34s cubic-bezier(.65,.05,.36,1);
-}
-.report-bullet-title::before {
-  content: '';
-  display: inline-block;
-  width: 1.5rem;
-  height: 1.5rem;
-  background: url('data:image/svg+xml;utf8,<svg fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="#00e5ff" /><path d="M8 12l2 2l4-4" stroke="#70d3fe" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>');
-  background-size: 1.5rem 1.5rem;
-  background-repeat: no-repeat;
-  position: absolute;
-  left: -2.3rem;
-  top: 50%;
-  transform: translateY(-50%);
 }
 
-/* ==== Out-of-Box Paragraphs: Shadow/Lift + Interactive === */
-.report-body-text {
-  background: rgba(255,255,255,0.025);
-  padding: 1.2rem 1.4rem 1.2rem 1.7rem;
-  border-left: 4px solid #aeeeff;
-  border-radius: 18px;
-  margin-bottom: 1.7rem;
-  box-shadow: 0 4px 28px rgba(0,198,255,0.10), 0 1px 6px #222a4996 inset;
-  color: #e8f6ff;
-  font-size: 0.8rem;
-  transition: background 0.34s cubic-bezier(.7,.05,.2,.99), 
-    box-shadow 0.22s cubic-bezier(.24,.85,.65,.37), 
-    transform 0.27s cubic-bezier(.55,.12,.99,.6);
-}
-.report-body-text:hover {
-  background: rgba(0,198,255,0.09);
-  box-shadow: 0 6px 34px #04d7ffe6, 0 1px 7px #222a49cc inset;
-  transform: translateY(-4px) scale(1.032);
-}
-
-/* ==== Responsive Tweak for Mobile ==== */
-/* @media (max-width: 600px) {
-  .ai-report-content {
-    padding: 1.3rem 0.7rem 1rem 0.3rem;
-    border-radius: 17px;
-  }
-  .report-section-heading { font-size: 1.4rem; }
-  .report-bullet-title { font-size: 1rem; }
-} */
-
-/* ==== Animated Accent Bar ==== */
-.ai-report-content::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0;
-  width: 6px; height: 100%;
-  background: linear-gradient(to bottom, #00e5ff 20%, #1e3247 100%);
-  border-radius: 8px;
-  animation: shiftBar 6.5s infinite alternate linear;
-  opacity: 0.93;
-}
-@keyframes shiftBar {
-  0% { filter: blur(0.7px); }
-  100% { filter: blur(3.1px); }
-}
-@media (max-width: 768px) {
-
-.report-section-heading {
-  font-size: 0.8rem;
-  font-weight: 900;
-  letter-spacing: 1.3px;
-  font-family: 'Poppins', sans-serif;
-  margin-bottom: 1.7rem;
-  padding-bottom: 0.55rem;
-  color: transparent;
-  background: linear-gradient(90deg, #00e5ff 40%, #537cff 60%, #eff7fa 130%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  animation: hueRotate 7s linear infinite;
-  border-bottom: 3px solid #6ee7ff;
-  text-shadow: 0 6px 32px #03285133, 0 1px 0 #8adfff44;
-}
+/* Bullet title (subheadings) */
 .report-bullet-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin: 1.7rem 0 0.6rem;
+  color: #ffffff;
   display: flex;
   align-items: center;
-  font-size: 0.7rem;
-  font-weight: 650;
-  /* padding-left: 1.3rem;
-  margin: 2.2rem 0 1.2rem 0; */
-  color: #ffffff;
-  border-left: 6px solid #00e5ff;
-  border-radius: 8px;
-  letter-spacing: 0.7px;
-  box-shadow: 0 5px 24px #00e5ff12;
-  position: relative;
-  background: rgba(0,229,255,0.09);
-  transition: background 0.34s cubic-bezier(.65,.05,.36,1);
+  gap: 0.9rem;
 }
 
-.report-body-text {
-  background: rgba(255,255,255,0.025);
-  padding: 1rem 1rem 1rem 1rem;
-  border-left: 4px solid #aeeeff;
-  border-radius: 18px;
-  margin-bottom: 1rem;
-  box-shadow: 0 4px 28px rgba(0,198,255,0.10), 0 1px 6px #222a4996 inset;
-  color: #e8f6ff;
-  font-size: 0.8rem;
-  transition: background 0.34s cubic-bezier(.7,.05,.2,.99), 
-    box-shadow 0.22s cubic-bezier(.24,.85,.65,.37), 
-    transform 0.27s cubic-bezier(.55,.12,.99,.6);
+.report-bullet-title::before {
+  content: "⚡";
+  font-size: 1rem;
+  color: #f59e0b;
 }
+
+/* Body content under bullets */
+.report-body-text {
+  font-size: 0.95rem;
+  color: #374151;
+  line-height: 1.6;
+  padding-left: 1.6rem;
+  margin-bottom: 1.2rem;
+  position: relative;
+}
+
+.report-body-text::before {
+  content: "✔️";
+  position: absolute;
+  left: 0;
+  top: 0.1rem;
+  font-size: 0.9rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ai-report-content {
+    padding: 1.5rem 1.2rem;
+    margin: 1rem 0 2rem; /* Maintain bottom margin on small screens */
+  }
+
+  .report-body-text {
+    padding-left: 1.8rem;
+  }
 }
