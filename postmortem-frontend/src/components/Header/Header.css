@@ -1,101 +1,116 @@
+/* Header wrapper */
 .header {
   width: 100%;
-  padding: 1rem 2rem;
+  padding: 1.25rem 2rem;
   background-color: transparent;
-  color: var(--text-color);
   display: flex;
   justify-content: center;
+  z-index: 10;
 }
 
+/* Central header container */
 .header-content {
+  max-width: 1200px;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1100px;
-  width: 100%;
-  gap: 1.5rem; 
+  gap: 2rem;
 }
+
+/* Left logo section */
 .logo-section {
   display: flex;
-  align-items: center;
-}
-.logo-text {
-  display: flex;
   flex-direction: column;
+  justify-content: center;
 }
+
+/* Logo text */
 .logo {
   font-family: 'Poppins', sans-serif;
   font-size: 2.5rem;
   font-weight: 700;
-  background: linear-gradient(90deg, #0085ff, #0085ff);
+  background: linear-gradient(90deg, #0085ff, #00c6ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  margin-right: 1rem;
+  line-height: 1.2;
 }
+
+/* Subtitle under logo */
 .logo-subtitle {
-  margin-left: 64px;
-  font-size: 0.75rem;
-  color: #ccc;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #aaa;
+  margin-top: 0.3rem;
+  margin-left: 6px;
+
 }
-/* Right section containing buttons */
+
+/* Right section */
 .header-right {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
-/* Toggle buttons */
-
-.theme-toggle { 
-  /* background: transparent;
-  border: 1px solid #00d5ff; */
-  /* border-radius: 12px; */
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* Theme toggle icon */
+.theme-toggle {
+  font-size: 1.3rem;
   color: var(--text-color);
-  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+}
+
+/* History toggle button */
+.history-toggle-btn {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  background-color: transparent;
+  color: var(--text-color);
+  border: 1px solid #0085ff;
+  border-radius: 0.75rem;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .history-toggle-btn:hover {
-  background-color: rgba(0, 213, 255, 0.1);
+  background-color: rgba(0, 133, 255, 0.1);
+  border-color: #00b2ff;
 }
 
-/* Responsive adjustments */
+/* Responsive layout */
 @media (max-width: 768px) {
   .header {
     padding: 1rem;
   }
 
   .logo {
-     white-space: nowrap;
-    font-size: 1rem;
+    font-size: 1.8rem;
   }
- .history-toggle-btn{
-  width: 200px;
-  height: 25px;
-  margin-left: 0px;
-  background: transparent;
-  border: 1px solid #0085ff;
-  border-radius: 12px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: var(--text-color);
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
- }
-  .theme-toggle {
-    /* width: 6px;
-    height: 6px; */
-    font-size: 0.5rem;
-    border-radius: 10px;
+
+  .logo-subtitle {
+    font-size: 0.65rem;
   }
 
   .header-content {
-    gap: 0.75rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .history-toggle-btn {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .theme-toggle {
+    font-size: 1.1rem;
   }
 }

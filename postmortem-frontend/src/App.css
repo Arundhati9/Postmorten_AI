@@ -17,7 +17,7 @@
   --highlight: #ab47bc;
   --glass-blur: blur(14px);
   --shadow: 0 16px 40px rgba(0, 198, 255, 0.1);
-  --gradient-primary: linear-gradient(135deg, #00c6ff, #00e5ff);
+  --gradient-primary: linear-gradient(135deg, #00c6ff, #056b76);
   --gradient-danger: linear-gradient(to right, #ff1744, #ff4081);
   --hover-blue: #00eaff;
 }
@@ -215,6 +215,7 @@ select:focus {
     width: 90%;
     font-size: 1rem;
   }
+  
 
   .toggle-history-button {
     width: 100%;

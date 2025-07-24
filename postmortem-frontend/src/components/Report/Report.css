@@ -1,6 +1,6 @@
 /* ===== Report Section ===== */
 .report {
-  background: var(--card-bg);
+  background: rgba(0, 198, 255, 0.12);
   padding: 2rem;
   border-radius: 16px;
   box-shadow: var(--shadow);

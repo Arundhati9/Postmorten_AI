@@ -2,7 +2,7 @@
   margin-top: 0.5rem;
   padding: 2rem 2.2rem;
   border-radius: 20px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(0, 198, 255, 0.04));
+  background: rgba(0, 198, 255, 0.12);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(0, 198, 255, 0.18);

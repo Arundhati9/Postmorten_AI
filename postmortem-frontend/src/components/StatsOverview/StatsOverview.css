@@ -1,7 +1,7 @@
 /* Page Wrapper */
 .stats-overview {
   padding: 1.5rem;
-  background-color: #0d0d0d;
+  background-color: rgba(0, 198, 255, 0.12);
   color: #eaeaea;
   font-family: Arial, sans-serif;
   padding-bottom: 1rem;
@@ -16,7 +16,7 @@
 
 /* Individual stat box */
 .stat-box {
-  background-color: #1a1a1a;
+  background-color: rgba(0, 198, 255, 0.12);
   border: 1px solid #2c2c2c;
   border-radius: 8px;
   padding: 0.8rem;

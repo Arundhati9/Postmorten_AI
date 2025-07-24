@@ -7,8 +7,8 @@
   padding: 2.2rem 1.2rem 1.2rem;
   background: linear-gradient(
     135deg,
-    rgba(0, 198, 255, 0.06),
-    rgba(255, 255, 255, 0.015)
+    rgba(0, 198, 255, 0.12),
+    rgba(0, 198, 255, 0.12)
   );
   border-right: 1px solid rgba(0, 198, 255, 0.12);
   backdrop-filter: blur(20px);
