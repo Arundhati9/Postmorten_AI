@@ -1,5 +1,4 @@
-// ...imports remain unchanged
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import "@fontsource/inter/400.css";
 import "@fontsource/inter/600.css";
 import "@fontsource/poppins/600.css";
@@ -16,25 +15,16 @@ import Header from "./components/Header/Header";
 import HistoryPanel from "./components/HistoryPanel/HistoryPanel";
 import Spinner from "./components/Spinner/Spinner";
 import Popup from "./components/Popup/Popup";
-import FormattedReport from "./components/FormattedReport/FormattedReport";
-import VideoPreview from "./components/VideoPreview/VideoPreview";
-import StatsOverview from "./components/StatsOverview/StatsOverview";
-import VideoCharts from "./components/VideoCharts/VideoCharts";
 import Report from "./components/Report/Report";
 
-// import SentimentSummary from "./components/SentimentSummary/SentimentSummary";
+import { useResponsive } from "./hooks/useResponsive";
+import { extractYouTubeVideoId, isValidYouTubeUrl } from "./hooks/useYouTubeHelpers";
+import { useHistory } from "./hooks/useHistory";
+import { useSSE } from "./hooks/useSSE";
 
 import "./App.css";
-import Footer from "./components/Footer/Footer";
 
 const API_BASE_URL = "http://localhost:8000";
-
-const extractYouTubeVideoId = (url) => {
-  const match = url.match(
-    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
-  );
-  return match ? match[1] : null;
-};
 
 function App() {
   const [url, setUrl] = useState("");
@@ -42,56 +32,13 @@ function App() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [stepMessage, setStepMessage] = useState("");
-  const [history, setHistory] = useState(() => {
-    const saved = localStorage.getItem("analysisHistory");
-    return saved ? JSON.parse(saved) : [];
-  });
   const [activePopup, setActivePopup] = useState(null);
   const [videoId, setVideoId] = useState(null);
-  const [showHistory, setShowHistory] = useState(window.innerWidth >= 768);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const loadingBar = useRef(null);
 
-  useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      setShowHistory(!mobile);
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const isValidYouTubeUrl = (url) => {
-    const regex =
-      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
-    return regex.test(url);
-  };
-
-  const listenToSSE = (taskId, analyzedUrl) => {
-    const source = new EventSource(`${API_BASE_URL}/events/${taskId}`);
-
-    setStepMessage("📡 Waiting for real-time updates...");
-
-    source.onmessage = (event) => {
-      const msg = event.data;
-      console.log("SSE:", msg);
-
-      if (msg === "done" || msg === "error") {
-        source.close();
-        fetchFinalResult(taskId, analyzedUrl);
-      } else {
-        setStepMessage(msg);
-      }
-    };
-
-    source.onerror = (err) => {
-      console.error("SSE error:", err);
-      source.close();
-      pollForResult(taskId, analyzedUrl);
-    };
-  };
+  const { isMobile, showHistory, setShowHistory } = useResponsive();
+  const { history, saveReport, deleteReport, setHistory } = useHistory();
 
   const pollForResult = async (taskId, analyzedUrl, retries = 30, interval = 3000) => {
     setStepMessage("🔁 Polling backend for result...");
@@ -99,12 +46,7 @@ function App() {
       try {
         const res = await axios.get(`${API_BASE_URL}/result/${taskId}`);
         if (res.data.status === "done" && res.data.report) {
-          displayReport(
-            res.data.report,
-            res.data.summary,
-            analyzedUrl,
-            res.data.video_title
-          );
+          displayReport(res.data.report, res.data.summary, analyzedUrl, res.data.video_title);
           return;
         }
       } catch (err) {
@@ -122,12 +64,7 @@ function App() {
     try {
       const res = await axios.get(`${API_BASE_URL}/result/${taskId}`);
       if (res.data.status === "done" && res.data.report) {
-        displayReport(
-          res.data.report,
-          res.data.summary,
-          analyzedUrl,
-          res.data.video_title
-        );
+        displayReport(res.data.report, res.data.summary, analyzedUrl, res.data.video_title);
       } else {
         toast.error("❌ Failed to fetch analysis result.");
         setLoading(false);
@@ -142,6 +79,14 @@ function App() {
       loadingBar.current?.complete();
     }
   };
+
+  const { listenToSSE } = useSSE({
+    API_BASE_URL,
+    loadingBar,
+    setStepMessage,
+    fetchFinalResult,
+    pollForResult,
+  });
 
   const handleAnalyze = async () => {
     if (!url.trim()) return;
@@ -167,12 +112,7 @@ function App() {
       if (response.data.task_id) {
         listenToSSE(response.data.task_id, url);
       } else if (response.data.report) {
-        displayReport(
-          response.data.report,
-          response.data.summary,
-          url,
-          response.data.video_title
-        );
+        displayReport(response.data.report, response.data.summary, url, response.data.video_title);
       } else {
         throw new Error("Unexpected backend response");
       }
@@ -213,19 +153,6 @@ function App() {
     }, 300);
   };
 
-  const saveReport = (url, report, title = "Untitled Video") => {
-    const newEntry = { url, report, title, date: new Date().toLocaleString() };
-    const updatedHistory = [newEntry, ...history].slice(0, 10);
-    setHistory(updatedHistory);
-    localStorage.setItem("analysisHistory", JSON.stringify(updatedHistory));
-  };
-
-  const deleteReport = (indexToDelete) => {
-    const updatedHistory = history.filter((_, index) => index !== indexToDelete);
-    setHistory(updatedHistory);
-    localStorage.setItem("analysisHistory", JSON.stringify(updatedHistory));
-  };
-
   const exportPDF = async () => {
     const input = document.getElementById("report");
     if (!input) return;
@@ -255,11 +182,7 @@ function App() {
     <div className="App">
       <LoadingBar color="#00c6ff" height={3} ref={loadingBar} />
       <ToastContainer position="top-center" autoClose={3000} />
-      <Header
-        history={history}
-        onSelect={loadReport}
-        onDelete={deleteReport}
-      />
+      <Header history={history} onSelect={loadReport} onDelete={deleteReport} />
 
       <div className="main-section">
         <HistoryPanel
@@ -306,7 +229,7 @@ function App() {
           </div>
 
           {loading && <Spinner message={stepMessage} />}
-         
+
           {report && (
             <Report
               report={report}
@@ -315,7 +238,6 @@ function App() {
               exportPDF={exportPDF}
             />
           )}
-
         </main>
       </div>
 
