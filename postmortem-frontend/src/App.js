@@ -153,20 +153,65 @@ function App() {
     }, 300);
   };
 
-  const exportPDF = async () => {
-    const input = document.getElementById("report");
-    if (!input) return;
+  // const exportPDF = async () => {
+  //   const input = document.getElementById("report");
+  //   if (!input) return;
 
-    const canvas = await html2canvas(input);
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+  //   const canvas = await html2canvas(input);
+  //   const imgData = canvas.toDataURL("image/png");
+  //   const pdf = new jsPDF("p", "mm", "a4");
+  //   const imgProps = pdf.getImageProperties(imgData);
+  //   const pdfWidth = pdf.internal.pageSize.getWidth();
+  //   const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`postmortem_report_${new Date().toISOString().slice(0, 10)}.pdf`);
-  };
+  //   pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+  //   pdf.save(`postmortem_report_${new Date().toISOString().slice(0, 10)}.pdf`);
+  // };
+ const exportPDF = async () => {
+  const input = document.getElementById("report"); // <-- Export only the report section
+  if (!input) {
+    console.error("Element with ID 'report' not found.");
+    return;
+  }
+
+  await document.fonts.ready;
+
+  const canvas = await html2canvas(input, {
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    scrollY: -window.scrollY,
+    logging: false,
+    backgroundColor: null, // Transparent background (optional)
+  });
+
+  const imgData = canvas.toDataURL("image/png");
+  const pdf = new jsPDF("p", "mm", "a4");
+
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+
+  const imgWidth = pageWidth;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+  let position = 0;
+
+  while (position < imgHeight) {
+    pdf.addImage(
+      imgData,
+      "PNG",
+      0,
+      -position,
+      imgWidth,
+      imgHeight
+    );
+    position += pageHeight;
+    if (position < imgHeight) pdf.addPage();
+  }
+
+  pdf.save(`postmortem_report_${new Date().toISOString().slice(0, 10)}.pdf`);
+};
+
 
   const loadReport = (entry) => {
     setUrl(entry.url);

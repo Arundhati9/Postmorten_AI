@@ -29,7 +29,7 @@ const Header = ({ darkMode, setDarkMode, history, onSelect, onDelete }) => {
       <div className="header-content">
         <div className="logo-section">
           <div className="logo-text">
-            <h1 className="logo">🎥 PostMortem AI</h1>
+            <h1 className="logo">🎥 Algosnitch.ai</h1>
             <p className="logo-subtitle">Your Video Analyst</p>
             </div>
         </div>

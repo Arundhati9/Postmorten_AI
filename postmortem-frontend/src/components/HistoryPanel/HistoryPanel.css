@@ -34,12 +34,13 @@
 .history-panel h3 {
   text-align: center;
   color: #0085ff;
-  font-size: 1.4rem;
+  font-size: 1.8rem;
   font-weight: 700;
   font-family: "Poppins", sans-serif;
-  margin-bottom: 1.8rem;
+  margin-top: 30px;
+  margin-bottom: 1.5rem;
   letter-spacing: 0.7px;
-  text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+  /* text-shadow: 0 0 8px rgba(0, 229, 255, 0.4); */
   background: linear-gradient(to right, #0085ff, #0085ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
