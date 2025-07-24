@@ -3,8 +3,13 @@ import "./FormattedReport.css";
 
 // Utility to strip Markdown-like symbols
 function stripMarkdown(line) {
-  return line.replace(/^[*_]+|[*_]+$/g, "").trim();
+  return line
+    .replace(/[*_]{1,3}(.+?)[*_]{1,3}/g, '$1') // Removes inline **bold**, *italic*, etc.
+    .replace(/^[*_]+|[*_]+$/g, "")             // Removes leading/trailing markdown
+    .replace(/\s{2,}/g, " ")                   // Collapses double spaces
+    .trim();
 }
+
 
 const FormattedReport = ({ rawReport }) => {
   if (!rawReport) return null;
