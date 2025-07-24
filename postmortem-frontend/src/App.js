@@ -20,6 +20,8 @@ import FormattedReport from "./components/FormattedReport/FormattedReport";
 import VideoPreview from "./components/VideoPreview/VideoPreview";
 import StatsOverview from "./components/StatsOverview/StatsOverview";
 import VideoCharts from "./components/VideoCharts/VideoCharts";
+import Report from "./components/Report/Report";
+
 // import SentimentSummary from "./components/SentimentSummary/SentimentSummary";
 
 import "./App.css";
@@ -304,24 +306,16 @@ function App() {
           </div>
 
           {loading && <Spinner message={stepMessage} />}
-
+         
           {report && (
-            <div id="report" className="report">
-              <h2>📊 AI Analysis Report</h2>
-              <VideoPreview videoId={videoId} />
-              {summary && <StatsOverview summary={summary} />}
-              {summary && (
-                <VideoCharts
-                  ctr={summary.ctr}
-                  avgViewDuration={summary.avg_view_duration}
-                  seoScore={summary.seo_score}
-                />
-              )}
-              <FormattedReport rawReport={report} />
-              <button onClick={exportPDF} className="analyse">📄 Export as PDF</button>
-              <Footer />
-            </div>
+            <Report
+              report={report}
+              summary={summary}
+              videoId={videoId}
+              exportPDF={exportPDF}
+            />
           )}
+
         </main>
       </div>
 

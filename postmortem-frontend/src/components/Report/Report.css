@@ -1,28 +1,39 @@
+/* ===== Report Section ===== */
 .report {
-  background: rgba(0, 114, 255, 0.1);
-  padding: 1.5rem;
-  margin-top: 2rem;
-  border-radius: 12px;
-  animation: fadeIn 1s ease-in;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  background: var(--card-bg);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  backdrop-filter: var(--glass-blur);
+  animation: fadeInUp 0.6s ease forwards;
 }
 
 .report h2 {
-  top: 0; 
-  z-index: 10; 
-  position: sticky;
-  margin-bottom: 1rem;
-  color: #00c6ff;
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
   font-size: 1.8rem;
-  /* background-color: #eaeaea; */
+  margin-bottom: 1.5rem;
+  color: var(--accent);
 }
 
-.ai-report-content p,
-.ai-report-content li {
-  line-height: 1.65;
-  margin-bottom: 0.9rem;
-  color: #eaeaea;
-  font-size: small;
+/* PDF Export Button inside Report */
+.report .analyse {
+  margin-top: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .report {
+    padding: 1.2rem;
+  }
+
+  .report h2 {
+    font-size: 1.4rem;
+    text-align: center;
+  }
+
+  .report .analyse {
+    width: 100%;
+    font-size: 1.1rem;
+  }
 }
