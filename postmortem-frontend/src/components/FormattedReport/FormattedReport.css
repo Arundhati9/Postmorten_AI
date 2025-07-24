@@ -1,73 +1,77 @@
 .ai-report-content {
   width: 100%;
-  margin: 2rem 0;
-  padding: 1.5rem;
-  background-color: rgba(0, 198, 255, 0.12);
-  color: #87a7d5;
+  margin: 2rem 0 3rem;
+  padding: 2rem;
+  background-color: rgba(0, 198, 255, 0.12);
+  color: #111827;
   font-family: 'Inter', sans-serif;
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border-radius: 1rem;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
   box-sizing: border-box;
+  position: relative;
+  z-index: 1;
 }
 
+/* Ensure full width for wrapper elements */
 .dashboard-container,
 .page-content,
 .report-wrapper {
   width: 100%;
 }
 
+/* Paragraphs inside report content */
 .ai-report-content p {
-  margin-bottom: 1rem;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #dbdee3;
-  line-height: 1.6;
-}
-
-.report-section-heading {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #f5f6f8;
-  margin: 1.5rem 0 1rem;
-}
-
-.report-bullet-title {
-  font-size: 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 1.05rem;
   font-weight: 600;
-  margin: 1.2rem 0 0.5rem;
-  color: #ecedee;
+  color: #60a5fa;
+  line-height: 1.7;
 }
 
+/* Section headers */
+.report-section-heading {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #ef4444;
+  margin: 1.8rem 0 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Subheading bullets */
+.report-bullet-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.6rem;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Main bullet content */
 .report-body-text {
-  font-size: 0.8rem;
-  color: #e1e9f5;
-  line-height: 1.6;
-  padding-left: 1rem;
-  margin-bottom: 0.8rem;
+  font-size: 1rem;
+  color: #822541;
+  line-height: 1.7;
+  padding-left: 0;
+  margin-bottom: 1rem;
   position: relative;
 }
 
-.report-body-text::before {
-  content: "•";
-  position: absolute;
-  left: 0;
-  top: 0;
-  font-size: 1rem;
-  line-height: 1;
-  color: #9ca3af;
-}
-
+/* Responsive tweaks */
 @media (max-width: 768px) {
   .ai-report-content {
-    padding: 1rem;
-    margin: 1rem 0;
+    padding: 1.5rem 1rem;
+    margin: 1rem 0 2rem;
   }
 
   .report-section-heading {
-    font-size: 1.5rem;
+    font-size: 2rem;
   }
 
   .report-body-text {
-    padding-left: 1.2rem;
+    padding-left: 0;
   }
 }
