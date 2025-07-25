@@ -6,7 +6,7 @@ const Footer = () => {
     <footer className="app-footer">
       <div className="footer-content">
         <p>© {new Date().getFullYear()} PostMortem AI. All rights reserved.</p>
-        <p>Built with ❤️ by Arundhati and Archisman</p>
+        <p>Built with ❤️ by A²</p>
       </div>
     </footer>
   );

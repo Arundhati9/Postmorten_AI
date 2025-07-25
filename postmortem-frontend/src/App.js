@@ -225,7 +225,7 @@ function App() {
 
   return (
     <div className="App">
-      <LoadingBar color="#00c6ff" height={3} ref={loadingBar} />
+      <LoadingBar color="#567afaff" height={3} ref={loadingBar} />
       <ToastContainer position="top-center" autoClose={3000} />
       <Header history={history} onSelect={loadReport} onDelete={deleteReport} />
 
@@ -275,14 +275,14 @@ function App() {
 
           {loading && <Spinner message={stepMessage} />}
 
-          {report && (
+          {/* {report && (
             <Report
               report={report}
               summary={summary}
               videoId={videoId}
               exportPDF={exportPDF}
             />
-          )}
+          )} */}
         </main>
       </div>
 
