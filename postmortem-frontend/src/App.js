@@ -24,6 +24,9 @@ import { useSSE } from "./hooks/useSSE";
 
 import "./App.css";
 
+import { Routes, Route } from "react-router-dom";
+import Trend from "./Pages/Trend";
+
 const API_BASE_URL = "http://localhost:8000";
 
 function App() {
@@ -153,65 +156,43 @@ function App() {
     }, 300);
   };
 
-  // const exportPDF = async () => {
-  //   const input = document.getElementById("report");
-  //   if (!input) return;
+  const exportPDF = async () => {
+    const input = document.getElementById("report");
+    if (!input) {
+      console.error("Element with ID 'report' not found.");
+      return;
+    }
 
-  //   const canvas = await html2canvas(input);
-  //   const imgData = canvas.toDataURL("image/png");
-  //   const pdf = new jsPDF("p", "mm", "a4");
-  //   const imgProps = pdf.getImageProperties(imgData);
-  //   const pdfWidth = pdf.internal.pageSize.getWidth();
-  //   const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    await document.fonts.ready;
 
-  //   pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-  //   pdf.save(`postmortem_report_${new Date().toISOString().slice(0, 10)}.pdf`);
-  // };
- const exportPDF = async () => {
-  const input = document.getElementById("report"); // <-- Export only the report section
-  if (!input) {
-    console.error("Element with ID 'report' not found.");
-    return;
-  }
+    const canvas = await html2canvas(input, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      scrollY: -window.scrollY,
+      logging: false,
+      backgroundColor: null,
+    });
 
-  await document.fonts.ready;
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
 
-  const canvas = await html2canvas(input, {
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    scrollY: -window.scrollY,
-    logging: false,
-    backgroundColor: null, // Transparent background (optional)
-  });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
 
-  const imgData = canvas.toDataURL("image/png");
-  const pdf = new jsPDF("p", "mm", "a4");
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
+    let position = 0;
 
-  const imgWidth = pageWidth;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    while (position < imgHeight) {
+      pdf.addImage(imgData, "PNG", 0, -position, imgWidth, imgHeight);
+      position += pageHeight;
+      if (position < imgHeight) pdf.addPage();
+    }
 
-  let position = 0;
-
-  while (position < imgHeight) {
-    pdf.addImage(
-      imgData,
-      "PNG",
-      0,
-      -position,
-      imgWidth,
-      imgHeight
-    );
-    position += pageHeight;
-    if (position < imgHeight) pdf.addPage();
-  }
-
-  pdf.save(`postmortem_report_${new Date().toISOString().slice(0, 10)}.pdf`);
-};
-
+    pdf.save(`postmortem_report_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
 
   const loadReport = (entry) => {
     setUrl(entry.url);
@@ -239,50 +220,60 @@ function App() {
         />
 
         <main>
-          <div className="search-bar-with-icon">
-            <div className="input-wrapper">
-              <input
-                type="text"
-                placeholder="Paste YouTube URL..."
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-              />
-              <span
-                className="paste-icon"
-                onClick={async () => {
-                  try {
-                    const text = await navigator.clipboard.readText();
-                    if (text.trim()) {
-                      setUrl(text);
-                      toast.success("✅ Link pasted from clipboard!");
-                    } else {
-                      toast.warn("📋 Clipboard is empty.");
-                    }
-                  } catch (err) {
-                    console.error("Clipboard error:", err);
-                    toast.error("❌ Unable to read clipboard.");
-                  }
-                }}
-              >
-                📋
-              </span>
-            </div>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <>
+                  <div className="search-bar-with-icon">
+                    <div className="input-wrapper">
+                      <input
+                        type="text"
+                        placeholder="Paste YouTube URL..."
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                      />
+                      <span
+                        className="paste-icon"
+                        onClick={async () => {
+                          try {
+                            const text = await navigator.clipboard.readText();
+                            if (text.trim()) {
+                              setUrl(text);
+                              toast.success("✅ Link pasted from clipboard!");
+                            } else {
+                              toast.warn("📋 Clipboard is empty.");
+                            }
+                          } catch (err) {
+                            console.error("Clipboard error:", err);
+                            toast.error("❌ Unable to read clipboard.");
+                          }
+                        }}
+                      >
+                        📋
+                      </span>
+                    </div>
 
-            <button onClick={handleAnalyze} disabled={loading} className="analyse">
-              {loading ? "Analyzing..." : "Analyze"}
-            </button>
-          </div>
+                    <button onClick={handleAnalyze} disabled={loading} className="analyse">
+                      {loading ? "Analyzing..." : "Analyze"}
+                    </button>
+                  </div>
 
-          {loading && <Spinner message={stepMessage} />}
+                  {loading && <Spinner message={stepMessage} />}
 
-          {/* {report && (
-            <Report
-              report={report}
-              summary={summary}
-              videoId={videoId}
-              exportPDF={exportPDF}
+                  {report && (
+                    <Report
+                      report={report}
+                      summary={summary}
+                      videoId={videoId}
+                      exportPDF={exportPDF}
+                    />
+                  )}
+                </>
+              }
             />
-          )} */}
+            <Route path="/trend" element={<Trend />} />
+          </Routes>
         </main>
       </div>
 

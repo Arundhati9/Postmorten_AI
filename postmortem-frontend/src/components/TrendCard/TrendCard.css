@@ -1,0 +1,36 @@
+.trend-card {
+  background-color: #1e293b; /* Slate-800 */
+  border: 1px solid #334155; /* Slate-700 */
+  border-radius: 8px;
+  padding: 1rem;
+  color: #f1f5f9; /* Slate-100 */
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.trend-card:hover {
+  transform: translateY(-2px);
+}
+
+.trend-card h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.trend-card .idea {
+  margin-top: 0.5rem;
+  font-style: italic;
+  color: #cbd5e1; /* Slate-300 */
+}
+
+.trend-card .script {
+  font-family: monospace;
+  background: #0f172a;
+  padding: 0.5rem;
+  border-radius: 4px;
+  white-space: pre-line;
+}

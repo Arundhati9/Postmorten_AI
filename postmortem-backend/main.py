@@ -17,6 +17,11 @@ from starlette.concurrency import run_in_threadpool
 
 from yt_helper import get_video_stats, get_channel_stats
 
+from trend import router as trend_router
+
+
+
+
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
@@ -35,6 +40,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+app.include_router(trend_router)
 CACHE: Dict[str, Dict[str, Any]] = {}
 TASKS: Dict[str, Dict[str, Any]] = {}
 CACHE_EXPIRY = 3600
