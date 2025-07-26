@@ -264,3 +264,6 @@ async def events(task_id: str):
         sse_updates.pop(task_id, None)
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+app.include_router(trend_router, prefix="/api")

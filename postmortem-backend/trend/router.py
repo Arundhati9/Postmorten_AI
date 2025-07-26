@@ -1,17 +1,14 @@
 from fastapi import APIRouter, Query
-from typing import List
-from .trend_data import get_mock_trends
+from trend.trend_data import get_viral_youtube_trends
 
-router = APIRouter()
+router = APIRouter(prefix="/api", tags=["Trends"])  # Make sure prefix is /api
 
-@router.get("/api/trends")
-async def fetch_trends(
-    platform: str = Query("YouTube"),
-    niche: str = Query("Gaming"),
-    frequency: str = Query("daily")
+@router.get("/trends")
+async def youtube_trends_by_niche(
+    platform: str = Query(...),
+    niche: str = Query(...)
 ):
-    """
-    Returns trend cards based on platform, niche, and frequency.
-    """
-    trends = get_mock_trends(platform=platform, niche=niche, frequency=frequency)
-    return {"trends": trends}
+    if platform.lower() == "youtube":
+        data = await get_viral_youtube_trends(niche)
+        return {"platform": "youtube", "niche": niche, "trends": data}
+    return {"trends": []}

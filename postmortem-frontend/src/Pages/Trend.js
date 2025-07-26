@@ -1,47 +1,50 @@
-import React, { useState } from "react";
-import TrendCard from "../components/TrendCard/TrendCard";
-import useFetchTrends from "../hooks/useFetchTrends";
-import "./Trend.css";
+// src/Pages/Trend.js
 
-const TrendLab = () => {
-  const [platform, setPlatform] = useState("YouTube");
-  const [niche, setNiche] = useState("Technology");
-  const [period, setPeriod] = useState("daily");
+import React, { useEffect, useState } from "react";
+import { fetchYoutubeTrendsByNiche } from "../hooks/trendService";
+import TrendCard from "../components/TrendCard/TrendCard"; // ✅ correct import
 
-  const { trends, loading, error } = useFetchTrends(platform, niche, period);
+const Trend = () => {
+  const [selectedNiche, setSelectedNiche] = useState("fitness");
+  const [trends, setTrends] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchTrends = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchYoutubeTrendsByNiche(selectedNiche);
+      setTrends(data); // ✅ only set the trends array
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTrends();
+  }, [selectedNiche]);
 
   return (
-    <div className="trend-lab">
-      <div className="trend-lab-header">
-        <h2>🔥 Trend Lab</h2>
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">Trending YouTube Videos in "{selectedNiche}"</h1>
 
-        <div className="filters">
-          <select onChange={(e) => setPlatform(e.target.value)} value={platform}>
-            <option>YouTube</option>
-            <option>TikTok</option>
-            <option>Instagram</option>
-          </select>
+      <select
+        value={selectedNiche}
+        onChange={(e) => setSelectedNiche(e.target.value)}
+        className="mb-4 p-2 border rounded"
+      >
+        <option value="fitness">Fitness</option>
+        <option value="technology">Technology</option>
+        <option value="gaming">Gaming</option>
+        <option value="fashion">Fashion</option>
+      </select>
 
-          <select onChange={(e) => setNiche(e.target.value)} value={niche}>
-            <option>Technology</option>
-            <option>Fashion</option>
-            <option>Gaming</option>
-            <option>Finance</option>
-            <option>Education</option>
-          </select>
+      {loading && <p>Loading trends...</p>}
+      {error && <p className="text-red-500">Error: {error}</p>}
 
-          <button onClick={() => setPeriod("daily")} className={period === "daily" ? "active" : ""}>
-            Daily
-          </button>
-          <button onClick={() => setPeriod("weekly")} className={period === "weekly" ? "active" : ""}>
-            Weekly
-          </button>
-        </div>
-      </div>
-
-      <div className="trend-grid">
-        {loading && <p>Loading trends...</p>}
-        {error && <p>Error fetching trends</p>}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {trends.map((trend, index) => (
           <TrendCard key={index} trend={trend} />
         ))}
@@ -50,4 +53,4 @@ const TrendLab = () => {
   );
 };
 
-export default TrendLab;
+export default Trend;
