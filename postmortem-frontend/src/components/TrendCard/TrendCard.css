@@ -1,36 +1,41 @@
-/* TrendCard.css */
+/* src/components/TrendCard.css */
+
 .trend-card {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 1rem;
-  padding: 1rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  margin: 10px;
+  color: #fff;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.15);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .trend-card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
 }
 
 .trend-card h2 {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #ffffff;
+  margin-bottom: 8px;
 }
 
 .trend-card p {
-  font-size: 0.875rem;
-  margin: 0.25rem 0;
-  color: #d1d5db;
+  margin: 4px 0;
+  font-size: 0.95rem;
 }
 
 .trend-keywords {
-  color: #38bdf8;
+  color: #7dd3fc; /* Tailwind blue-300 */
+  font-style: italic;
 }
 
 .trend-hashtags {
-  color: #c084fc;
+  color: #d8b4fe; /* Tailwind purple-300 */
+  font-style: italic;
 }
+

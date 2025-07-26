@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { fetchYoutubeTrendsByNiche } from "../hooks/trendService";
-import TrendCard from "../components/TrendCard/TrendCard"; // ✅ correct import
-
+import TrendCard from "../components/TrendCard/TrendCard";
+import "./Trend.css"; 
+import Footer from "../components/Footer/Footer"
 const Trend = () => {
   const [selectedNiche, setSelectedNiche] = useState("fitness");
   const [trends, setTrends] = useState([]);
@@ -14,7 +15,7 @@ const Trend = () => {
     try {
       setLoading(true);
       const data = await fetchYoutubeTrendsByNiche(selectedNiche);
-      setTrends(data); // ✅ only set the trends array
+      setTrends(data);
     } catch (err) {
       setError(err.message || "Something went wrong");
     } finally {
@@ -27,30 +28,35 @@ const Trend = () => {
   }, [selectedNiche]);
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Trending YouTube Videos in "{selectedNiche}"</h1>
+    <div className="trend-page">
+      <h1 className="trend-title">🔥 Trending YouTube Videos in "{selectedNiche}"</h1>
 
-      <select
-        value={selectedNiche}
-        onChange={(e) => setSelectedNiche(e.target.value)}
-        className="mb-4 p-2 border rounded"
-      >
-        <option value="fitness">Fitness</option>
-        <option value="technology">Technology</option>
-        <option value="gaming">Gaming</option>
-        <option value="fashion">Fashion</option>
-      </select>
+      <div className="trend-select-container">
+        <select
+          value={selectedNiche}
+          onChange={(e) => setSelectedNiche(e.target.value)}
+          className="trend-select"
+        >
+          <option value="fitness">Fitness</option>
+          <option value="technology">Technology</option>
+          <option value="gaming">Gaming</option>
+          <option value="fashion">Fashion</option>
+        </select>
+      </div>
 
-      {loading && <p>Loading trends...</p>}
-      {error && <p className="text-red-500">Error: {error}</p>}
+      {loading && <p className="trend-loading">⏳ Fetching the hottest trends...</p>}
+      {error && <p className="trend-error">🚨 {error}</p>}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="trend-grid">
         {trends.map((trend, index) => (
           <TrendCard key={index} trend={trend} />
         ))}
       </div>
+      <Footer/>
     </div>
+    
   );
 };
 
 export default Trend;
+
