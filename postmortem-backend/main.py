@@ -17,7 +17,8 @@ from starlette.concurrency import run_in_threadpool
 
 from yt_helper import get_video_stats, get_channel_stats
 
-from trend import router as trend_router
+from trend.router import router as trend_router
+
 
 
 
