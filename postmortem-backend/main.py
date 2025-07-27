@@ -266,4 +266,5 @@ async def events(task_id: str):
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
-app.include_router(trend_router, prefix="/api")
+# app.include_router(trend_router, prefix="/api")
+app.include_router(trend_router)

@@ -1,62 +1,61 @@
-// src/Pages/Trend.js
-
-import React, { useEffect, useState } from "react";
-import { fetchYoutubeTrendsByNiche } from "../hooks/trendService";
+import React, { useState } from "react";
+import ChannelInput from "../components/ChannelInput/ChannelInput";
 import TrendCard from "../components/TrendCard/TrendCard";
-import "./Trend.css"; 
-import Footer from "../components/Footer/Footer"
-const Trend = () => {
-  const [selectedNiche, setSelectedNiche] = useState("fitness");
-  const [trends, setTrends] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+import { fetchChannelDetails, fetchYoutubeTrendsByNiche } from "../hooks/trendService";
 
-  const fetchTrends = async () => {
+const Trend = () => {
+  const [trends, setTrends] = useState([]);
+  const [error, setError] = useState("");
+  const [channelInfo, setChannelInfo] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleChannelSubmit = async (channelName) => {
     try {
       setLoading(true);
-      const data = await fetchYoutubeTrendsByNiche(selectedNiche);
-      setTrends(data);
+      setError("");
+      setTrends([]);
+      setChannelInfo(null);
+
+      const info = await fetchChannelDetails(channelName);
+      setChannelInfo(info);
+
+      const minSubs = Math.floor(info.subscribers * 0.5);
+      const maxSubs = Math.ceil(info.subscribers * 5);
+
+      const trends = await fetchYoutubeTrendsByNiche(info.niche, minSubs, maxSubs);
+      setTrends(trends);
     } catch (err) {
+      console.error(err);
       setError(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchTrends();
-  }, [selectedNiche]);
-
   return (
-    <div className="trend-page">
-      <h1 className="trend-title">🔥 Trending YouTube Videos in "{selectedNiche}"</h1>
+    <div className="p-4 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold mb-4">YouTube Channel Trend Explorer</h1>
 
-      <div className="trend-select-container">
-        <select
-          value={selectedNiche}
-          onChange={(e) => setSelectedNiche(e.target.value)}
-          className="trend-select"
-        >
-          <option value="fitness">Fitness</option>
-          <option value="technology">Technology</option>
-          <option value="gaming">Gaming</option>
-          <option value="fashion">Fashion</option>
-        </select>
-      </div>
+      <ChannelInput onSubmit={handleChannelSubmit} />
 
-      {loading && <p className="trend-loading">⏳ Fetching the hottest trends...</p>}
-      {error && <p className="trend-error">🚨 {error}</p>}
+      {loading && <p className="text-gray-600">Analyzing...</p>}
+      {error && <p className="text-red-500">Error: {error}</p>}
 
-      <div className="trend-grid">
+      {channelInfo && (
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold">{channelInfo.title}</h2>
+          <p>Subscribers: {channelInfo.subscribers.toLocaleString()}</p>
+          <p>Detected Niche: <span className="font-medium">{channelInfo.niche}</span></p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {trends.map((trend, index) => (
           <TrendCard key={index} trend={trend} />
         ))}
       </div>
-      <Footer/>
     </div>
-    
   );
 };
 
 export default Trend;
-
