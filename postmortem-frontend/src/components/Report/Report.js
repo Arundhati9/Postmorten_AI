@@ -21,7 +21,7 @@ const Report = ({ report, summary, videoId, exportPDF }) => {
         />
       )}
       <FormattedReport rawReport={report} />
-      <button onClick={exportPDF} className="analyse">📄 Export as PDF</button>
+      {/* <button onClick={exportPDF} className="analyse">📄 Export as PDF</button> */}
       <Footer />
     </div>
   );

@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query
 from .trend_data import get_channel_info_by_name, get_viral_youtube_trends
-from typing import List
 
 router = APIRouter()
 
@@ -14,19 +13,15 @@ async def get_trends_by_channel(
         if not channel_info:
             raise HTTPException(status_code=404, detail="Channel not found")
 
-        niche = channel_info.get("niche")
-        subscriber_count = channel_info.get("subscriberCount", 0)
+        niche = channel_info.get("niche", "general")
+        subscriber_count = int(channel_info.get("subscriberCount", 0))
 
-        # 2. Dynamically calculate min/max subs
+        # 2. Dynamically calculate sub range
         min_subs = int(subscriber_count * 0.5)
         max_subs = int(subscriber_count * 5)
 
-        # 3. Fetch trending videos
-        trends = await get_viral_youtube_trends(
-            niche=niche,
-            min_subs=min_subs,
-            max_subs=max_subs
-        )
+        # 3. Get trends
+        trends = await get_viral_youtube_trends(niche=niche, min_subs=min_subs, max_subs=max_subs)
 
         return {
             "niche": niche,

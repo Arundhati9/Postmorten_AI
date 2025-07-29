@@ -1,61 +1,72 @@
-import React, { useState } from "react";
-import ChannelInput from "../components/ChannelInput/ChannelInput";
+import { useState } from "react";
 import TrendCard from "../components/TrendCard/TrendCard";
-import { fetchChannelDetails, fetchYoutubeTrendsByNiche } from "../hooks/trendService";
 
-const Trend = () => {
-  const [trends, setTrends] = useState([]);
-  const [error, setError] = useState("");
-  const [channelInfo, setChannelInfo] = useState(null);
+export default function TrendPage() {
+  const [channelName, setChannelName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [trends, setTrends] = useState(null);
 
-  const handleChannelSubmit = async (channelName) => {
+  const handleFetchTrends = async () => {
+    if (!channelName) return;
+
+    setLoading(true);
+    setError("");
+    setTrends(null);
+
     try {
-      setLoading(true);
-      setError("");
-      setTrends([]);
-      setChannelInfo(null);
+      const res = await fetch(`/api/trends?channel_name=${encodeURIComponent(channelName)}`);
+      if (!res.ok) throw new Error("Could not fetch trends. Please check the channel name.");
 
-      const info = await fetchChannelDetails(channelName);
-      setChannelInfo(info);
-
-      const minSubs = Math.floor(info.subscribers * 0.5);
-      const maxSubs = Math.ceil(info.subscribers * 5);
-
-      const trends = await fetchYoutubeTrendsByNiche(info.niche, minSubs, maxSubs);
-      setTrends(trends);
+      const data = await res.json();
+      setTrends(data);
     } catch (err) {
-      console.error(err);
-      setError(err.message || "Something went wrong");
+      setError(err.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-4">YouTube Channel Trend Explorer</h1>
+    <div className="min-h-screen p-6 bg-gray-100">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6 text-center">🎯 YouTube Trend Explorer</h1>
 
-      <ChannelInput onSubmit={handleChannelSubmit} />
-
-      {loading && <p className="text-gray-600">Analyzing...</p>}
-      {error && <p className="text-red-500">Error: {error}</p>}
-
-      {channelInfo && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold">{channelInfo.title}</h2>
-          <p>Subscribers: {channelInfo.subscribers.toLocaleString()}</p>
-          <p>Detected Niche: <span className="font-medium">{channelInfo.niche}</span></p>
+        <div className="flex items-center space-x-4 mb-6">
+          <input
+            type="text"
+            className="flex-1 p-3 border border-gray-300 rounded-md"
+            placeholder="Enter YouTube Channel Name"
+            value={channelName}
+            onChange={(e) => setChannelName(e.target.value)}
+          />
+          <button
+            onClick={handleFetchTrends}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            {loading ? "Analyzing..." : "Fetch Trends"}
+          </button>
         </div>
-      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {trends.map((trend, index) => (
-          <TrendCard key={index} trend={trend} />
-        ))}
+        {error && <p className="text-red-500">{error}</p>}
+
+        {trends && (
+          <div className="bg-white rounded-lg shadow p-4 space-y-4">
+            <div className="text-sm text-gray-700">
+              <p><strong>Niche:</strong> {trends.niche}</p>
+              <p><strong>Subscriber Count:</strong> {trends.subscriberCount}</p>
+            </div>
+
+            <h2 className="text-xl font-semibold mt-4">🔥 Top Trending Videos</h2>
+
+            <div className="space-y-4">
+              {trends.trends.map((trend, index) => (
+                <TrendCard key={index} trend={trend} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
-};
-
-export default Trend;
+}

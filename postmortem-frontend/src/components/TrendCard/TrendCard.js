@@ -1,68 +1,37 @@
-// src/components/TrendCard/TrendCard.js
-import React from "react";
-import "./TrendCard.css";
-
-const TrendCard = ({ trend }) => {
-  if (!trend || typeof trend !== "object") return null;
-
-  const {
-    title = "Untitled Video",
-    channel = "Unknown Channel",
-    views = 0,
-    keywords = [],
-    hashtags = [],
-  } = trend;
-
-  const formattedViews =
-    typeof views === "number" ? views.toLocaleString() : "N/A";
-
-  const formattedKeywords =
-    Array.isArray(keywords) && keywords.length > 0
-      ? keywords.join(", ")
-      : "None";
-
-  const formattedHashtags =
-    Array.isArray(hashtags) && hashtags.length > 0
-      ? hashtags.join(", ")
-      : "None";
-
+export default function TrendCard({ trend }) {
   return (
-    <div className="trend-card">
-      <h2>{title}</h2>
-      <p>
-        <strong>Channel:</strong> {channel}
-      </p>
-      <p>
-        <strong>Views:</strong> {formattedViews}
-      </p>
-      <p className="trend-keywords">
-        <strong>Keywords:</strong> {formattedKeywords}
-      </p>
-      <p className="trend-hashtags">
-        <strong>Hashtags:</strong> {formattedHashtags}
-      </p>
+    <div className="border rounded-md p-4 bg-gray-50 shadow-sm">
+      <h3 className="text-lg font-bold text-blue-700">{trend.title}</h3>
+
+      <a
+        href={`https://www.youtube.com/watch?v=${trend.videoId}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm text-blue-500 underline"
+      >
+        Watch Video
+      </a>
+
+      <p className="mt-2 text-sm"><strong>Channel:</strong> {trend.channel}</p>
+      <p className="text-sm"><strong>Views:</strong> {trend.views}</p>
+
+      <div className="mt-2 text-sm">
+        <p><strong>Keywords:</strong> {trend.keywords.join(", ")}</p>
+        <p><strong>Hashtags:</strong> {trend.hashtags.join(" ")}</p>
+      </div>
+
+      <div className="mt-3">
+        <p className="font-medium text-sm mb-1">💡 Content Ideas:</p>
+        <ul className="list-disc list-inside text-sm text-gray-800">
+          {trend.videoIdeas && trend.videoIdeas.length > 0 ? (
+            trend.videoIdeas.map((idea, idx) => (
+              <li key={idx}>{idea}</li>
+            ))
+          ) : (
+            <li>No content ideas available</li>
+          )}
+        </ul>
+      </div>
     </div>
   );
-};
-
-export default TrendCard;
-
-
-
-// import React from "react";
-// import "./TrendCard.css"; 
-
-
-// const TrendCard = ({ trend }) => {
-//   return (
-//     <div className="trend-card">
-//       <h2>{trend.title}</h2>
-//       <p >Channel: {trend.channel}</p>
-//       <p >Views: {trend.views}</p>
-//       <p className="trend-keywords">Keywords: {trend.keywords?.join(", ")}</p>
-//       <p className="trend-hashtags">Hashtags: {trend.hashtags?.join(", ")}</p>
-//     </div>
-//   );
-// };
-
-// export default TrendCard;
+}
