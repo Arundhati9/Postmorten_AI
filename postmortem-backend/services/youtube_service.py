@@ -1,18 +1,14 @@
-import httpx
-import os
+from yt_helper import get_channel_metadata  # You should already have this
 
-YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
-
-async def fetch_channel_details(channel_name: str):
-    search_url = "https://www.googleapis.com/youtube/v3/search"
-    params = {
-        "part": "snippet",
-        "q": channel_name,
-        "type": "channel",
-        "key": YOUTUBE_API_KEY
-    }
-    async with httpx.AsyncClient() as client:
-        response = await client.get(search_url, params=params)
-        data = response.json()
-        return data['items'][0] if data['items'] else None
-s
+def fetch_channel_niche(channel_name: str) -> str:
+    metadata = get_channel_metadata(channel_name)
+    desc = metadata.get("description", "").lower()
+    if "tech" in desc:
+        return "Technology"
+    elif "fitness" in desc:
+        return "Fitness"
+    elif "travel" in desc:
+        return "Travel"
+    elif "gaming" in desc:
+        return "Gaming"
+    return "General"

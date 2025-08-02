@@ -1,21 +1,21 @@
 from fastapi import APIRouter, Query
-from services.personalization import match_trends_to_user_history
-from services.trend_generator import generate_video_idea
+from db.supabase_client import supabase
+from services.trend_generator import get_trends_for_niche
+from services.personalization import score_trends_by_user
 
 router = APIRouter()
 
-# Dummy trend source for now
-trends_db = [
-    {"title": "Day in Life Vlog", "keywords": ["vlog", "routine", "morning"]},
-    {"title": "AI Tools You Need", "keywords": ["ai", "tools", "productivity"]}
-]
-
 @router.get("/trends/personalized")
-async def get_personalized_trends(user_id: str):
-    personalized = match_trends_to_user_history(user_id, trends_db)
-    return {"trends": personalized}
+def personalized_trends(user_id: str = Query(...)):
+    user_data = supabase.table("users").select("*").eq("id", user_id).execute()
+    if not user_data.data:
+        return {"trends": []}
+    
+    user = user_data.data[0]
+    niche = user.get("niche", "General")
+    past_videos = user.get("history", [])  # Optional, if stored
 
-@router.get("/trends/idea")
-async def generate(trend: str, niche: str):
-    idea = await generate_video_idea(trend, niche)
-    return {"idea": idea}
+    trends = get_trends_for_niche(niche)
+    ranked = score_trends_by_user(trends, past_videos)
+
+    return {"trends": ranked}

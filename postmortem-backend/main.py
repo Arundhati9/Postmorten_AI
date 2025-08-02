@@ -267,4 +267,5 @@ async def events(task_id: str):
 
 from routers import user, trend
 # app.include_router(trend_router, prefix="/api")
-app.include_router(trend_router)
+app.include_router(user.router, prefix="/api")
+app.include_router(trend.router, prefix="/api")

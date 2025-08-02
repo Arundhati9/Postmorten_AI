@@ -1,17 +1,22 @@
-from fastapi import APIRouter
-from services.youtube_service import fetch_channel_details
+from fastapi import APIRouter, HTTPException
 from db.supabase_client import supabase
+from services.youtube_service import fetch_channel_niche
 
 router = APIRouter()
 
-@router.post("/user/register")
-async def register_user(email: str, channel_name: str):
-    channel_info = await fetch_channel_details(channel_name)
-    niche = channel_info['snippet']['title'].split()[0]  # simplistic niche detection
+@router.post("/register")
+def register_user(data: dict):
+    email = data.get("email")
+    channel_name = data.get("channel_name")
+    if not email or not channel_name:
+        raise HTTPException(status_code=400, detail="Missing fields")
 
-    new_user = supabase.table("users").insert({
+    niche = fetch_channel_niche(channel_name)
+
+    response = supabase.table("users").insert({
         "email": email,
         "channel_name": channel_name,
         "niche": niche
     }).execute()
-    return {"message": "User registered", "niche": niche}
+
+    return {"id": response.data[0]['id'], "niche": niche}

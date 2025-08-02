@@ -1,13 +1,13 @@
-from db.supabase_client import supabase
-
-def match_trends_to_user_history(user_id: str, trends: list):
-    user_videos = supabase.table("videos").select("*").eq("user_id", user_id).execute().data
-
-    # Simple matching logic using keyword overlap (can be upgraded)
-    personalized = []
+def score_trends_by_user(trends, history):
+    # Simulated scoring based on keyword match
+    scored = []
     for trend in trends:
-        for video in user_videos:
-            if any(kw in video['title'].lower() for kw in trend['keywords']):
-                trend["match_reason"] = f"Matches: {video['title']}"
-                personalized.append(trend)
-    return personalized
+        trend_keywords = set(trend.get("keywords", []))
+        history_keywords = set([kw for video in history for kw in video.get("keywords", [])])
+
+        score = len(trend_keywords & history_keywords)
+        trend["match_reason"] = f"Matched {score} keywords from your past content" if score else "New niche opportunity"
+        trend["score"] = score
+        scored.append(trend)
+    
+    return sorted(scored, key=lambda x: x["score"], reverse=True)

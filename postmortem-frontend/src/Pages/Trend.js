@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import TrendCard from '../components/TrendCard';
+import TrendCard from '../components/TrendCard/TrendCard';
 
 const TrendPage = () => {
   const [channelName, setChannelName] = useState('');
