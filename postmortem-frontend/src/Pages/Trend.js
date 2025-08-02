@@ -1,72 +1,63 @@
-import { useState } from "react";
-import TrendCard from "../components/TrendCard/TrendCard";
+import React, { useState } from 'react';
+import TrendCard from '../components/TrendCard';
 
-export default function TrendPage() {
-  const [channelName, setChannelName] = useState("");
+const TrendPage = () => {
+  const [channelName, setChannelName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [trends, setTrends] = useState(null);
+  const [results, setResults] = useState(null);
+  const [error, setError] = useState('');
 
-  const handleFetchTrends = async () => {
-    if (!channelName) return;
-
+  const fetchTrends = async () => {
     setLoading(true);
-    setError("");
-    setTrends(null);
-
+    setError('');
+    setResults(null);
     try {
-      const res = await fetch(`/api/trends?channel_name=${encodeURIComponent(channelName)}`);
-      if (!res.ok) throw new Error("Could not fetch trends. Please check the channel name.");
-
+      const res = await fetch(`/api/user-trends?channel_handle=${channelName}`);
+      if (!res.ok) throw new Error('Channel not found or API error');
       const data = await res.json();
-      setTrends(data);
+      setResults(data);
     } catch (err) {
-      setError(err.message || "Something went wrong.");
-    } finally {
-      setLoading(false);
+      setError(err.message);
     }
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen p-6 bg-gray-100">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-center">🎯 YouTube Trend Explorer</h1>
-
-        <div className="flex items-center space-x-4 mb-6">
-          <input
-            type="text"
-            className="flex-1 p-3 border border-gray-300 rounded-md"
-            placeholder="Enter YouTube Channel Name"
-            value={channelName}
-            onChange={(e) => setChannelName(e.target.value)}
-          />
-          <button
-            onClick={handleFetchTrends}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            {loading ? "Analyzing..." : "Fetch Trends"}
-          </button>
-        </div>
-
-        {error && <p className="text-red-500">{error}</p>}
-
-        {trends && (
-          <div className="bg-white rounded-lg shadow p-4 space-y-4">
-            <div className="text-sm text-gray-700">
-              <p><strong>Niche:</strong> {trends.niche}</p>
-              <p><strong>Subscriber Count:</strong> {trends.subscriberCount}</p>
-            </div>
-
-            <h2 className="text-xl font-semibold mt-4">🔥 Top Trending Videos</h2>
-
-            <div className="space-y-4">
-              {trends.trends.map((trend, index) => (
-                <TrendCard key={index} trend={trend} />
-              ))}
-            </div>
-          </div>
-        )}
+    <div className="p-8 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold mb-4">📈 Personalized Trend Insights</h1>
+      <div className="flex gap-2 mb-4">
+        <input
+          type="text"
+          placeholder="Enter YouTube channel name"
+          value={channelName}
+          onChange={(e) => setChannelName(e.target.value)}
+          className="border border-gray-300 p-2 rounded w-full"
+        />
+        <button onClick={fetchTrends} className="bg-blue-600 text-white px-4 py-2 rounded">
+          Fetch Trends
+        </button>
       </div>
+
+      {loading && <p>🔄 Analyzing channel...</p>}
+      {error && <p className="text-red-500">❌ {error}</p>}
+
+      {results && (
+        <>
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold">Channel: {results.channel}</h2>
+            <p className="text-sm text-gray-600">Niche: {results.niche}</p>
+            <p className="text-sm">Subscribers: {results.performance.subscriberCount}</p>
+          </div>
+
+          <div className="grid gap-4">
+            {results.recommendations.map((trend, i) => (
+              <TrendCard key={i} trend={trend} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
-}
+};
+
+export default TrendPage;

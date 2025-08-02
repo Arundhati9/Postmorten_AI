@@ -1,37 +1,25 @@
-export default function TrendCard({ trend }) {
-  return (
-    <div className="border rounded-md p-4 bg-gray-50 shadow-sm">
-      <h3 className="text-lg font-bold text-blue-700">{trend.title}</h3>
+import React from 'react';
 
+const TrendCard = ({ trend }) => {
+  return (
+    <div className="border border-gray-300 rounded p-4 shadow-sm hover:shadow-md transition-all bg-white">
+      <h3 className="text-lg font-semibold">{trend.title}</h3>
+      <p className="text-sm text-gray-600 mb-1">Match Score: {trend.matchScore || 0}%</p>
+      <p className="text-sm text-gray-500 mb-2">Keywords: {trend.keywords?.join(', ')}</p>
       <a
-        href={`https://www.youtube.com/watch?v=${trend.videoId}`}
+        href={`https://youtube.com/watch?v=${trend.videoId}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-sm text-blue-500 underline"
+        className="text-blue-600 underline text-sm"
       >
-        Watch Video
+        Watch Original
       </a>
-
-      <p className="mt-2 text-sm"><strong>Channel:</strong> {trend.channel}</p>
-      <p className="text-sm"><strong>Views:</strong> {trend.views}</p>
-
-      <div className="mt-2 text-sm">
-        <p><strong>Keywords:</strong> {trend.keywords.join(", ")}</p>
-        <p><strong>Hashtags:</strong> {trend.hashtags.join(" ")}</p>
-      </div>
-
-      <div className="mt-3">
-        <p className="font-medium text-sm mb-1">💡 Content Ideas:</p>
-        <ul className="list-disc list-inside text-sm text-gray-800">
-          {trend.videoIdeas && trend.videoIdeas.length > 0 ? (
-            trend.videoIdeas.map((idea, idx) => (
-              <li key={idx}>{idea}</li>
-            ))
-          ) : (
-            <li>No content ideas available</li>
-          )}
-        </ul>
+      <div className="mt-2">
+        <h4 className="text-sm font-medium text-gray-700">🎬 Suggested Script:</h4>
+        <p className="text-sm bg-gray-50 border border-gray-100 p-2 rounded">{trend.suggestedScript}</p>
       </div>
     </div>
   );
-}
+};
+
+export default TrendCard;

@@ -1,27 +1,30 @@
-import { useState, useEffect } from "react";
-import { fetchTrends } from "./trendService";
+// hooks/useFetchTrends.js
+import { useEffect, useState } from 'react';
 
-const useFetchTrends = (platform, niche, period) => {
+const useFetchTrends = (platform, niche, frequency) => {
   const [trends, setTrends] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    const fetchTrends = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `/api/trends?platform=${platform}&niche=${niche}&frequency=${frequency}`
+        );
+        const data = await response.json();
+        setTrends(data.trends || []);
+      } catch (err) {
+        console.error('Failed to fetch trends:', err);
+        setTrends([]);
+      }
+      setLoading(false);
+    };
 
-    fetchTrends(platform, niche, period)
-      .then((data) => {
-        setTrends(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Error loading trends");
-        setLoading(false);
-      });
-  }, [platform, niche, period]);
+    fetchTrends();
+  }, [platform, niche, frequency]);
 
-  return { trends, loading, error };
+  return { trends, loading };
 };
 
 export default useFetchTrends;

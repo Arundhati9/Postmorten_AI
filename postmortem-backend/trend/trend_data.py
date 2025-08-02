@@ -1,122 +1,59 @@
-import os
-import re
-from googleapiclient.discovery import build
-import openai
-from typing import List, Tuple
+import os, requests
+from dotenv import load_dotenv
 
-# YouTube Setup
+load_dotenv()
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
-YOUTUBE_API_SERVICE_NAME = "youtube"
-YOUTUBE_API_VERSION = "v3"
 
-# OpenAI Setup
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-def get_youtube_client():
-    return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=YOUTUBE_API_KEY)
-
-def extract_keywords_and_hashtags(text: str) -> Tuple[List[str], List[str]]:
-    words = re.findall(r'\b\w{4,}\b', text.lower())
-    hashtags = re.findall(r"#\w+", text.lower())
-    stop = {"your", "that", "with", "this", "about", "have"}
-    keywords = [w for w in words if w not in stop]
-    return keywords[:10], hashtags[:5]
-
-def get_channel_info_by_name(channel_name: str):
-    yt = get_youtube_client()
-    search_resp = yt.search().list(
-        part="snippet",
-        q=channel_name,
-        type="channel",
-        maxResults=1
-    ).execute()
-
-    items = search_resp.get("items", [])
+def fetch_channel_and_trends(handle: str):
+    # 1. Look up channel by handle
+    ch_url = "https://youtube.googleapis.com/youtube/v3/channels"
+    resp = requests.get(ch_url, params={
+        "forUsername": handle,
+        "part": "snippet,statistics",
+        "key": YOUTUBE_API_KEY
+    }).json()
+    items = resp.get("items", [])
     if not items:
         return None
+    ch = items[0]
+    chan_id = ch["id"]
+    channel_title = ch["snippet"]["title"]
+    niche = ch["snippet"]["description"].split()[0]  # naive niche inference
 
-    channel_id = items[0]["snippet"]["channelId"]
-    details = yt.channels().list(
-        part="snippet,statistics,topicDetails",
-        id=channel_id
-    ).execute()
-
-    ch = details["items"][0]
     stats = ch["statistics"]
-    subs = int(stats.get("subscriberCount", 0))
-    snippet = ch["snippet"]
-    topic_cats = ch.get("topicDetails", {}).get("topicCategories", [])
-    niche = topic_cats[0].split("/")[-1].lower() if topic_cats else "general"
-
-    return {
-        "channelId": channel_id,
-        "title": snippet["title"],
-        "subscriberCount": subs,
-        "niche": niche
+    channel_stats = {
+        "subscribers": int(stats.get("subscriberCount", 0)),
+        "totalViews": int(stats.get("viewCount", 0)),
+        "videoCount": int(stats.get("videoCount", 0))
     }
 
-async def generate_ideas_from_keywords(keywords: List[str]) -> List[str]:
-    if not keywords:
-        return []
+    # 2. Fetch channel videos
+    search_url = "https://www.googleapis.com/youtube/v3/search"
+    sr = requests.get(search_url, params={
+        "channelId": chan_id,
+        "part": "snippet",
+        "order": "date",
+        "maxResults": 20,
+        "key": YOUTUBE_API_KEY
+    }).json()
 
-    prompt = f"""You're a YouTube content strategist. Based on the following trending keywords: {', '.join(keywords)}, generate 2 viral YouTube content ideas suitable for a creator in this niche. Keep them short and creative."""
+    recent_ids = [item["id"]["videoId"] for item in sr.get("items", []) if item.get("id","").get("videoId")]
+    undervideos = []
+    if recent_ids:
+        stats_url = "https://www.googleapis.com/youtube/v3/videos"
+        vr = requests.get(stats_url, params={
+            "id": ",".join(recent_ids),
+            "part": "snippet,statistics",
+            "key": YOUTUBE_API_KEY
+        }).json()
+        for item in vr.get("items", []):
+            views = int(item["statistics"].get("viewCount", 0))
+            likes = int(item["statistics"].get("likeCount", 0))
+            ctr = (likes / max(1, views)) * 100
+            undervideos.append({"videoId": item["id"], "title": item["snippet"]["title"], "views": views, "ctr": ctr})
 
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # You can change to gpt-4 if needed
-            messages=[
-                {"role": "system", "content": "You're a helpful AI trained in YouTube content growth."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=150
-        )
-        ideas_text = response.choices[0].message.content.strip()
-        return [idea.strip("- ").strip() for idea in ideas_text.split("\n") if idea]
-    except Exception as e:
-        print(f"OpenAI error: {e}")
-        return []
+    # 3. Fetch trending recommendations (reusing earlier get_trends_for_niche)
+    from trend.trend_data import get_trends_for_niche
+    trends = get_trends_for_niche("youtube", niche, "daily")
 
-async def get_viral_youtube_trends(niche: str, min_subs: int, max_subs: int) -> list:
-    yt = get_youtube_client()
-
-    search_resp = yt.search().list(
-        q=niche,
-        part="id,snippet",
-        type="video",
-        order="viewCount",
-        maxResults=10
-    ).execute()
-
-    video_ids = [item["id"]["videoId"] for item in search_resp.get("items", [])]
-    if not video_ids:
-        return []
-
-    vid_resp = yt.videos().list(
-        part="snippet,statistics",
-        id=",".join(video_ids)
-    ).execute()
-
-    trends = []
-    for vid in vid_resp.get("items", []):
-        stats = vid["statistics"]
-        views = stats.get("viewCount", "0")
-        channel_title = vid["snippet"]["channelTitle"]
-        title = vid["snippet"]["title"]
-        desc = vid["snippet"].get("description", "")
-
-        keywords, hashtags = extract_keywords_and_hashtags(f"{title} {desc}")
-        video_ideas = await generate_ideas_from_keywords(keywords)
-
-        trends.append({
-            "title": title,
-            "videoId": vid["id"],
-            "channel": channel_title,
-            "views": views,
-            "keywords": keywords,
-            "hashtags": hashtags,
-            "subscriberCount": 0,
-            "videoIdeas": video_ideas
-        })
-
-    return trends
+    return {"channel_title": channel_title, "niche": niche, "channel_stats": channel_stats, "underperforming": undervideos, "trends": trends}
